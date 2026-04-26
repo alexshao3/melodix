@@ -95,28 +95,43 @@ export class JamendoService {
 
   async getTrending(limit = 24): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.slice(0, limit);
-    return this.cache.wrap(`${CACHE_PREFIX}:trending:${limit}`, CACHE_TTL, async () => {
-      const results = await this.fetch<JamendoTrack>('/tracks', {
-        limit,
-        order: 'popularity_total',
-        include: 'musicinfo',
-        audioformat: 'mp32',
-      });
-      return results.length ? results.map((t) => this.mapTrack(t)) : DEMO_TRACKS.slice(0, limit);
-    });
+    // The DEMO_TRACKS fallback lives OUTSIDE cache.wrap on purpose: if we
+    // returned demo data from inside the loader, an empty (transient-failure)
+    // upstream response would be transformed into a non-empty value and
+    // cached for the full TTL, defeating shouldCache(). Keeping the fallback
+    // here means a flap retries Jamendo on the very next request.
+    const fresh = await this.cache.wrap(
+      `${CACHE_PREFIX}:trending:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoTrack>('/tracks', {
+          limit,
+          order: 'popularity_total',
+          include: 'musicinfo',
+          audioformat: 'mp32',
+        });
+        return results.map((t) => this.mapTrack(t));
+      },
+    );
+    return fresh.length ? fresh : DEMO_TRACKS.slice(0, limit);
   }
 
   async getNewReleases(limit = 24): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.slice(0, limit);
-    return this.cache.wrap(`${CACHE_PREFIX}:new-releases:${limit}`, CACHE_TTL, async () => {
-      const results = await this.fetch<JamendoTrack>('/tracks', {
-        limit,
-        order: 'releasedate_desc',
-        include: 'musicinfo',
-        audioformat: 'mp32',
-      });
-      return results.length ? results.map((t) => this.mapTrack(t)) : DEMO_TRACKS.slice(0, limit);
-    });
+    const fresh = await this.cache.wrap(
+      `${CACHE_PREFIX}:new-releases:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoTrack>('/tracks', {
+          limit,
+          order: 'releasedate_desc',
+          include: 'musicinfo',
+          audioformat: 'mp32',
+        });
+        return results.map((t) => this.mapTrack(t));
+      },
+    );
+    return fresh.length ? fresh : DEMO_TRACKS.slice(0, limit);
   }
 
   async getByGenre(genre: string, limit = 24): Promise<Track[]> {

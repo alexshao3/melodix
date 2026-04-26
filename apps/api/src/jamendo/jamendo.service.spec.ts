@@ -119,6 +119,19 @@ describe('JamendoService caching', () => {
     restoreFetch();
   });
 
+  it('does not cache the DEMO_TRACKS fallback when upstream returns empty (getTrending)', async () => {
+    const { jamendo, restoreFetch } = makeServices();
+    const fetchMock = stubFetch([]); // simulates Jamendo timeout / 5xx
+    const a = await jamendo.getTrending(5);
+    const b = await jamendo.getTrending(5);
+    // We get demo tracks back on each call, but the loader is invoked every
+    // time — the empty Jamendo response is never pinned in cache for the TTL.
+    expect(a.length).toBeGreaterThan(0);
+    expect(b.length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    restoreFetch();
+  });
+
   it('does not cache empty results from a flapping upstream', async () => {
     const { jamendo, restoreFetch } = makeServices();
     const fetchMock = stubFetch([]); // simulates Jamendo timeout / 5xx
