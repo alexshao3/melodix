@@ -300,3 +300,67 @@ in one round-trip without paying the hydration cost.
   (and cache hydration via Redis), we can switch to option 1 with a
   single migration: add an `Artist` row for every distinct `Follow.artistId`,
   then add the FK. The composite PK survives that migration unchanged.
+
+---
+
+## ADR-0017 — `lyrics.ovh` proxy with negative caching
+
+**Date:** 2026-04-26
+**Status:** Accepted (#11)
+
+**Context.** "Lyrics view" was the next high-leverage user-facing feature on the H2 list, but lyrics rights are
+notoriously fragmented. Major catalogs (Genius, Musixmatch) require API keys
+and have strict request quotas. We don't want to add a credentialed
+dependency to the boot path — Melodix's whole demo-mode contract
+(`AGENTS.md` §3) is "must keep working when external keys are unset". We
+also don't want every play to hit a third-party provider directly from
+the browser because of CORS, rate limits, and the inability to cache
+across users.
+
+**Options considered:**
+
+1. **Genius** — best metadata + the lyric strings, but requires API token
+   and the lyrics themselves are scraped from HTML; legally murky.
+2. **Musixmatch** — official; free tier is too small (~2k req/day) to
+   cover even a small launch, and per-track snippets only.
+3. **lyrics.ovh** — free, no auth, simple `GET /v1/{artist}/{title}`
+   contract returning `{ lyrics }`. Public CC dataset; quality varies but
+   coverage is decent for the long-tail Creative-Commons catalog Jamendo
+   exposes. Not suitable for hot-major-label tracks, which we don't carry
+   anyway.
+
+**Decision.** Use `lyrics.ovh` behind a NestJS proxy module. The browser
+hits our API (`GET /api/lyrics?artist=…&title=…`); we forward to
+`lyrics.ovh`, normalize the response to `{ artist, title, lyrics, source }`,
+and cache it in Redis. Cache TTL is **24 h on a hit** (lyrics rarely
+change) and **1 h on a miss** — negative caching keeps us from spamming
+the upstream while still letting newly-indexed tracks re-resolve within
+an hour.
+
+The endpoint is public (lyrics aren't user-scoped), but throttled at
+120 req/min via `@Throttle` so a single bad actor can't drain the
+upstream. Empty inputs short-circuit without touching cache or fetch. A
+4 s timeout on the upstream fetch + try/catch around the response means
+a flaky provider never blocks playback — the UI just shows
+"Couldn't load lyrics".
+
+The web UI gets a `LyricsDrawer` (right-side slide-over with a `Mic2`
+icon trigger in `PlayerBar`); the Mini App gets a `LyricsSheet` (bottom
+sheet from `MiniPlayer`). Both fetch lazily on open and rebuild on track
+change with a `cancelled` flag so stale resolutions don't overwrite the
+current track.
+
+**Consequences:**
+
+- **Pros.** Zero new credentials, zero added env vars, zero added boot
+  dependencies. Cache amortizes upstream traffic; demo mode still works
+  (no provider call when artist+title are missing). The contract is
+  simple enough to swap out later without UI changes — replace the
+  service body with Genius/Musixmatch and the FE keeps working.
+- **Cons.** Coverage is patchy on the long-tail Jamendo catalog; many
+  tracks will simply show "No lyrics available". This is acceptable
+  because the value is "lyrics when present", not "lyrics for everything".
+- **Future direction.** When we add direct upload (#H3), tracks will have
+  user-supplied lyric metadata that takes precedence over the upstream.
+  At that point this ADR remains correct: lyrics.ovh stays as the
+  fallback, and the cache key gains a source-prefix.

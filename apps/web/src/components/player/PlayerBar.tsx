@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Mic2,
   Pause,
   Play,
   Repeat,
@@ -15,6 +16,7 @@ import {
 import { useEffect, useState } from 'react';
 import { formatDuration } from '@melodix/shared';
 import { cn } from '@/lib/cn';
+import { LyricsDrawer } from './LyricsDrawer';
 import { usePlayer } from './PlayerProvider';
 
 export function PlayerBar() {
@@ -36,6 +38,7 @@ export function PlayerBar() {
   } = usePlayer();
 
   const [scrubValue, setScrubValue] = useState<number | null>(null);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const display = scrubValue ?? position;
   const safeDuration = duration || currentTrack?.duration || 0;
   const pct = safeDuration ? Math.min(100, Math.max(0, (display / safeDuration) * 100)) : 0;
@@ -82,7 +85,9 @@ export function PlayerBar() {
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-white">{currentTrack.title}</div>
+                <div className="truncate text-sm font-semibold text-white">
+                  {currentTrack.title}
+                </div>
                 <div className="truncate text-xs text-zinc-400">{currentTrack.artistName}</div>
               </div>
             </div>
@@ -117,7 +122,11 @@ export function PlayerBar() {
                   aria-label={isPlaying ? 'Pause' : 'Play'}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg shadow-black/40"
                 >
-                  {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
+                  {isPlaying ? (
+                    <Pause className="h-5 w-5 fill-current" />
+                  ) : (
+                    <Play className="h-5 w-5 fill-current" />
+                  )}
                 </motion.button>
                 <button
                   type="button"
@@ -136,7 +145,11 @@ export function PlayerBar() {
                     repeat !== 'off' ? 'text-emerald-400' : 'text-zinc-400 hover:text-white',
                   )}
                 >
-                  {repeat === 'one' ? <Repeat1 className="h-4 w-4" /> : <Repeat className="h-4 w-4" />}
+                  {repeat === 'one' ? (
+                    <Repeat1 className="h-4 w-4" />
+                  ) : (
+                    <Repeat className="h-4 w-4" />
+                  )}
                 </button>
               </div>
 
@@ -169,8 +182,20 @@ export function PlayerBar() {
               </div>
             </div>
 
-            {/* Right: volume */}
+            {/* Right: lyrics + volume */}
             <div className="hidden items-center gap-2 lg:flex">
+              <button
+                type="button"
+                onClick={() => setLyricsOpen(true)}
+                aria-label="Show lyrics"
+                title="Lyrics"
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 hover:text-white',
+                  lyricsOpen && 'text-fuchsia-400',
+                )}
+              >
+                <Mic2 className="h-4 w-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => setVolume(volume > 0 ? 0 : 0.85)}
@@ -190,6 +215,12 @@ export function PlayerBar() {
               />
             </div>
           </div>
+          <LyricsDrawer
+            open={lyricsOpen}
+            onClose={() => setLyricsOpen(false)}
+            artist={currentTrack.artistName}
+            title={currentTrack.title}
+          />
         </motion.div>
       )}
     </AnimatePresence>
