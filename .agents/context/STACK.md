@@ -179,6 +179,12 @@ commented out — currently using cloud providers. Uncomment to run locally.
 Database and Redis can be swapped for cloud providers (Supabase, Neon, Upstash, etc.)
 by changing `DATABASE_URL` / `REDIS_URL` in `.env.production`.
 
+`docker-compose.dev.yml` provides local Postgres + Redis for development (no env vars needed):
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
 ## Pre-commit (local)
 
 `husky@9` is installed via the root `prepare` script so `pnpm install` wires
