@@ -107,6 +107,12 @@ export const api = {
     ),
   clearHistory: () => request<{ ok: true }>(`/api/me/history`, { method: 'DELETE' }),
 
+  lyrics: (artist: string, title: string) =>
+    safe<{ artist: string; title: string; lyrics: string | null; source: string }>(
+      `/api/lyrics?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent(title)}`,
+      { artist, title, lyrics: null, source: 'none' },
+    ),
+
   follows: () => safe<Artist[]>(`/api/me/follows`, []),
   followIds: () => safe<string[]>(`/api/me/follows/ids`, []),
   follow: (artistId: string) =>

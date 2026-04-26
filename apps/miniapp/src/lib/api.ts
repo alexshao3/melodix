@@ -105,6 +105,12 @@ export const api = {
     authed<{ ok: true }>(`/api/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   me: () => authed<{ id: string; username: string }>(`/api/me`),
   history: (limit = 30) => safe<Track[]>(`/api/me/history?limit=${limit}`, []),
+  lyrics: (artist: string, title: string) =>
+    safe<{ artist: string; title: string; lyrics: string | null; source: string }>(
+      `/api/lyrics?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent(title)}`,
+      { artist, title, lyrics: null, source: 'none' },
+    ),
+
   follows: () => authed<Artist[]>(`/api/me/follows`),
   followIds: () => safe<string[]>(`/api/me/follows/ids`, []),
   follow: (artistId: string) =>

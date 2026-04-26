@@ -55,13 +55,13 @@
 
 ## Ports
 
-| Service                   | Port | URL                                                    |
-| ------------------------- | ---- | ------------------------------------------------------ |
-| Web                       | 3000 | http://localhost:3000                                  |
-| Mini App                  | 3001 | http://localhost:3001                                  |
-| API                       | 4000 | http://localhost:4000/api                              |
-| Postgres (docker-compose) | 5432 | `postgresql://melodix:melodix@localhost:5432/melodix`  |
-| Redis (docker-compose)    | 6379 | `redis://localhost:6379` (Jamendo cache + future jobs) |
+| Service                   | Port | URL                                                                 |
+| ------------------------- | ---- | ------------------------------------------------------------------- |
+| Web                       | 3000 | http://localhost:3000                                               |
+| Mini App                  | 3001 | http://localhost:3001                                               |
+| API                       | 4000 | http://localhost:4000/api                                           |
+| Postgres (docker-compose) | 5432 | `postgresql://melodix:melodix@localhost:5432/melodix`               |
+| Redis (docker-compose)    | 6379 | `redis://localhost:6379` (Jamendo cache, lyrics cache, future jobs) |
 
 ## Environment variables
 

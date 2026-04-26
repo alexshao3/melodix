@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { HistoryModule } from './history/history.module';
 import { FollowsModule } from './follows/follows.module';
+import { LyricsModule } from './lyrics/lyrics.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -47,6 +48,7 @@ import { HealthController } from './health.controller';
     SearchModule,
     HistoryModule,
     FollowsModule,
+    LyricsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

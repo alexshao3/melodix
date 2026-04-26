@@ -1,12 +1,15 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pause, Play, SkipBack, SkipForward } from 'lucide-react';
+import { Mic2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
+import { useState } from 'react';
 import { formatDuration } from '@melodix/shared';
+import { LyricsSheet } from './LyricsSheet';
 import { usePlayer } from './PlayerProvider';
 
 export function MiniPlayer() {
   const { currentTrack, isPlaying, position, duration, toggle, next, prev, seek } = usePlayer();
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const safeDuration = duration || currentTrack?.duration || 0;
   const pct = safeDuration ? Math.max(0, Math.min(100, (position / safeDuration) * 100)) : 0;
 
@@ -20,7 +23,10 @@ export function MiniPlayer() {
           transition={{ type: 'spring', stiffness: 220, damping: 28 }}
           className="fixed inset-x-3 bottom-3 z-40 overflow-hidden rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-2xl"
         >
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-rose-400 origin-left" style={{ transform: `scaleX(${pct / 100})` }} />
+          <div
+            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-rose-400 origin-left"
+            style={{ transform: `scaleX(${pct / 100})` }}
+          />
           <div className="flex items-center gap-3 p-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
               {currentTrack.cover ? (
@@ -35,6 +41,14 @@ export function MiniPlayer() {
             <div className="flex items-center gap-1">
               <button
                 type="button"
+                onClick={() => setLyricsOpen(true)}
+                aria-label="Show lyrics"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300"
+              >
+                <Mic2 className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
                 onClick={prev}
                 aria-label="Previous"
                 className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300"
@@ -47,7 +61,11 @@ export function MiniPlayer() {
                 aria-label={isPlaying ? 'Pause' : 'Play'}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black"
               >
-                {isPlaying ? <Pause className="h-4 w-4 fill-current" /> : <Play className="h-4 w-4 fill-current" />}
+                {isPlaying ? (
+                  <Pause className="h-4 w-4 fill-current" />
+                ) : (
+                  <Play className="h-4 w-4 fill-current" />
+                )}
               </button>
               <button
                 type="button"
@@ -74,6 +92,14 @@ export function MiniPlayer() {
               <span>{formatDuration(safeDuration)}</span>
             </div>
           </div>
+          {currentTrack && (
+            <LyricsSheet
+              open={lyricsOpen}
+              onClose={() => setLyricsOpen(false)}
+              artist={currentTrack.artistName}
+              title={currentTrack.title}
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>

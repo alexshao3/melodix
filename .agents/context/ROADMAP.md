@@ -31,7 +31,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - [x] **Rate limiting** on the public API (`@nestjs/throttler`) — shipped in #7. Three buckets: `short` (60/10s burst), `default` (300/60s sustained), `auth` (10/60s for `/auth/*`). `/api/health` is `@SkipThrottle`. ADR-0013.
 - [ ] **OpenAPI / Swagger** at `/api/docs` (read-only in production).
 - [ ] **Telegram bot deep-links** — share playlist as `t.me/<bot>?startapp=playlist_<id>`.
-- [ ] **Lyrics view** — fetch from a free lyrics provider (e.g. lyrics.ovh), cache to Redis, render on Now-Playing.
+- [x] **Lyrics view** — `GET /api/lyrics?artist&title` proxies `lyrics.ovh`; Redis-cached 24h hit / 1h miss; web drawer + Mini App bottom sheet from the player. (Shipped in #11, ADR-0017)
 - [ ] **Storybook** for `packages/ui` so motion components can be reviewed in isolation.
 - [x] **Playwright E2E (smoke)** — `playwright.config.ts` + `e2e/smoke.spec.ts` cover home → click track → mini player, search route, library guest sign-in CTA. New `.github/workflows/e2e.yml` runs headless chromium against the production builds with `DEMO_TRACKS` fixtures (no Postgres, no Jamendo key). _(shipped in #9; ADR-0015)_. Authenticated flows (login, likes, server history) deferred until CI adds a Postgres service.
 
