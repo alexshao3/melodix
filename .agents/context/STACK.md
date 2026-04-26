@@ -51,6 +51,9 @@
 | `passport` / `passport-jwt`                                           | ^0.7 / ^4    |
 | `class-validator` / `class-transformer`                               | ^0.14 / ^0.5 |
 | `bcryptjs`                                                            | ^2.4.3       |
+| `@aws-sdk/client-s3`                                                  | ^3.x         |
+| `@aws-sdk/s3-request-presigner`                                       | ^3.x         |
+| `multer` / `@types/multer`                                            | ^1.x         |
 | jest / ts-jest                                                        | ^29.x        |
 
 ## Ports
@@ -67,15 +70,20 @@
 
 ### `apps/api/.env`
 
-| Var                  | Required                       | Used by                         | Notes                                                                                                |
-| -------------------- | ------------------------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`       | yes (for auth/playlists/likes) | Prisma                          | docker-compose default: `postgresql://melodix:melodix@localhost:5432/melodix?schema=public`          |
-| `JWT_SECRET`         | yes                            | `auth/`                         | Any non-empty string in dev                                                                          |
-| `JAMENDO_CLIENT_ID`  | no                             | `jamendo/`                      | Without it, the API serves `DEMO_TRACKS`                                                             |
-| `REDIS_URL`          | no                             | `cache/`                        | E.g. `redis://localhost:6379`. When unset, the API runs without cache (every request hits upstream). |
-| `TELEGRAM_BOT_TOKEN` | no                             | `auth.service.ts:telegramLogin` | Required to verify Mini App `initData`                                                               |
-| `CORS_ORIGIN`        | no                             | `main.ts`                       | Comma-separated allow-list; defaults to `*`                                                          |
-| `PORT`               | no                             | `main.ts`                       | Defaults to `4000`                                                                                   |
+| Var                    | Required                       | Used by                         | Notes                                                                                                |
+| ---------------------- | ------------------------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`         | yes (for auth/playlists/likes) | Prisma                          | docker-compose default: `postgresql://melodix:melodix@localhost:5432/melodix?schema=public`          |
+| `JWT_SECRET`           | yes                            | `auth/`                         | Any non-empty string in dev                                                                          |
+| `JAMENDO_CLIENT_ID`    | no                             | `jamendo/`                      | Without it, the API serves `DEMO_TRACKS`                                                             |
+| `REDIS_URL`            | no                             | `cache/`                        | E.g. `redis://localhost:6379`. When unset, the API runs without cache (every request hits upstream). |
+| `TELEGRAM_BOT_TOKEN`   | no                             | `auth.service.ts:telegramLogin` | Required to verify Mini App `initData`                                                               |
+| `CORS_ORIGIN`          | no                             | `main.ts`                       | Comma-separated allow-list; defaults to `*`                                                          |
+| `R2_ACCOUNT_ID`        | no                             | `storage/`                      | Cloudflare account ID for R2 bucket                                                                  |
+| `R2_ACCESS_KEY_ID`     | no                             | `storage/`                      | R2 API token access key                                                                              |
+| `R2_SECRET_ACCESS_KEY` | no                             | `storage/`                      | R2 API token secret key                                                                              |
+| `R2_BUCKET`            | no                             | `storage/`                      | R2 bucket name; defaults to `melodix`                                                                |
+| `R2_PUBLIC_URL`        | no                             | `storage/`                      | Public URL prefix for uploaded files (e.g. `https://melodix-cdn.yourdomain.com`)                     |
+| `PORT`                 | no                             | `main.ts`                       | Defaults to `4000`                                                                                   |
 
 ### `apps/web/.env.local`
 

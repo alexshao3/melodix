@@ -37,7 +37,9 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 
 ## H3 — Long-term / ambitious
 
-- [ ] **Direct upload source** — let creators upload their own CC tracks. New `Track.source = 'upload'` path, S3-compatible storage, basic moderation.
+- [x] **Admin system Phase 1 (API)** — `AdminUser` model, admin JWT auth, Cloudflare R2 upload service, CRUD API for uploaded tracks, music source toggle. `TracksService` and `SearchService` merge results from enabled sources. _(shipped in this PR; ADR-0020)_
+- [~] **Admin dashboard UI (Phase 2)** — Next.js admin panel at `apps/admin` for track management, source toggling, bulk upload.
+- [-] **Direct upload source** — superseded by admin upload system above. Admin uploads tracks via `POST /api/admin/tracks` → R2.
 - [ ] **Free-Music-Archive (FMA) source** — additional public catalog. Already enumerated in `Track.source`.
 - [ ] **Server-side streaming proxy** with HTTP range support — better mobile data behaviour, gives us hooks for analytics & DRM-free transcoding.
 - [ ] **Recommendations** — start with collaborative filtering on `Like` data; later swap for a content-based vector similarity over track metadata.
