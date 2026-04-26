@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String?  @unique
+  username    String   @unique
+  password    String?
+  displayName String?
+  avatar      String?
+  telegramId  String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  playlists Playlist[]
+  likes     Like[]
+
+  @@map("users")
+}
+
+model Artist {
+  id         String   @id @default(cuid())
+  externalId String?  @unique
+  name       String
+  image      String?
+  bio        String?
+  followers  Int      @default(0)
+  source     String   @default("jamendo")
+  createdAt  DateTime @default(now())
+
+  albums Album[]
+  tracks Track[]
+
+  @@index([name])
+  @@map("artists")
+}
+
+model Album {
+  id          String   @id @default(cuid())
+  externalId  String?  @unique
+  name        String
+  cover       String?
+  releaseDate String?
+  artistId    String
+  source      String   @default("jamendo")
+  createdAt   DateTime @default(now())
+
+  artist Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  tracks Track[]
+
+  @@index([name])
+  @@index([artistId])
+  @@map("albums")
+}
+
+model Track {
+  id          String   @id @default(cuid())
+  externalId  String?  @unique
+  title       String
+  duration    Int
+  audioUrl    String
+  streamUrl   String?
+  cover       String?
+  genre       String?
+  releaseDate String?
+  source      String   @default("jamendo")
+  artistId    String
+  albumId     String?
+  createdAt   DateTime @default(now())
+
+  artist          Artist           @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  album           Album?           @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  likes           Like[]
+  playlistTracks  PlaylistTrack[]
+
+  @@index([title])
+  @@index([artistId])
+  @@index([albumId])
+  @@index([genre])
+  @@map("tracks")
+}
+
+model Playlist {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  cover       String?
+  isPublic    Boolean  @default(true)
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner  User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tracks PlaylistTrack[]
+
+  @@index([ownerId])
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id         String   @id @default(cuid())
+  playlistId String
+  trackId    String
+  position   Int
+  addedAt    DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId, position])
+  @@map("playlist_tracks")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  trackId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+  @@index([userId])
+  @@map("likes")
+}
