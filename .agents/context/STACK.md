@@ -22,6 +22,7 @@
 | ESLint (api)         | ^8.57.1  |
 | husky                | ^9.1.7   |
 | lint-staged          | ^15.5.2  |
+| `@playwright/test`   | ^1.59.1  |
 | Tailwind CSS         | ^3.4.17  |
 | PostCSS              | ^8.4.49  |
 | autoprefixer         | ^10.4.20 |
@@ -97,7 +98,9 @@
 | `pnpm build`        | Build everything                                                   |
 | `pnpm typecheck`    | `tsc --noEmit` per package                                         |
 | `pnpm lint`         | `next lint` / `eslint` per package, `--max-warnings 0`             |
-| `pnpm test`         | Run jest suites (currently only `apps/api`, 18 tests pass)         |
+| `pnpm test`         | Run jest suites (currently only `apps/api`, 53 tests pass)         |
+| `pnpm e2e`          | Run Playwright smoke (`e2e/*.spec.ts`); auto-spawns API+web        |
+| `pnpm e2e:ui`       | Same, but in Playwright's UI mode for local debugging              |
 | `pnpm format`       | Prettier write across `**/*.{ts,tsx,js,jsx,json,md}`               |
 | `pnpm format:check` | Prettier `--check` (CI-friendly)                                   |
 | `pnpm clean`        | Delete every package's build outputs + root `node_modules`         |
@@ -126,6 +129,12 @@ pnpm --filter @melodix/miniapp dev
 3. `pnpm typecheck`
 4. `pnpm lint`
 5. `pnpm build`
+
+`.github/workflows/e2e.yml` runs in parallel with `ci.yml`. Steps: install →
+`prisma:generate` → `pnpm build` → cache `~/.cache/ms-playwright` keyed on
+`pnpm-lock.yaml` → install chromium (or system deps if cache hit) →
+`pnpm e2e`. Always uploads `playwright-report/` (7-day retention); uploads
+`test-results/` traces only on failure.
 
 `.github/workflows/context-freshness.yml` runs alongside and warns if a PR
 changes code without updating any `.agents/context/` file.

@@ -209,3 +209,50 @@ stats" view we'll keep an aggregated rollup table instead of raising the
 cap. Localstorage remains the source of truth for guests and as an instant
 optimistic update; the two views converge after the first authed
 `GET /api/me/history`.
+
+## ADR-0015 — Playwright E2E: hermetic smoke against demo fixtures, no DB
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** We needed a continuous safety net catching the kind of "click
+play and nothing happens" regressions that unit tests can't see. Spinning
+up Postgres + Jamendo creds in CI just for a smoke run is overkill — every
+public read endpoint already supports two graceful degradations (`DEMO_TRACKS`
+fallback when `JAMENDO_CLIENT_ID` is missing; PrismaService warns + boots
+without a DB connection), and those code paths are themselves load-bearing.
+Exercising them in CI is a feature, not a bug.
+**Decision:** Adopt `@playwright/test` with one chromium project and a
+`webServer` array that spawns the production builds of `apps/api` and
+`apps/web` on ports 4000 / 3000. The API is started with `JAMENDO_CLIENT_ID=""`
+and no `DATABASE_URL` (the values flow through Playwright's `env`), so
+Jamendo calls fall through to demo fixtures and Prisma's `$connect` error
+is swallowed by `PrismaService.onModuleInit`. The smoke suite covers three
+stable, deterministic golden-path slices:
+
+1. **Home renders sections + cards.** Asserts on the `Trending now` and
+   `Fresh releases` headings and on the first track card (looked up by
+   title fetched server-side from `/api/tracks/trending?limit=1`).
+2. **Click → mini player.** Clicks the first card and asserts the global
+   `PlayerBar` mounts (its primary toggle has aria-label `Play` or `Pause`)
+   and shows the chosen title.
+3. **Library guest CTA.** Visits `/library` while signed-out and confirms
+   the "Sign in" button is rendered.
+
+Authenticated flows (login, likes, server history) are intentionally **out
+of scope for the first PR**. Adding them requires a Postgres service
+container in CI and seeding a known user, which doubles the workflow
+complexity. We'll add them once the harness has proven stable.
+
+CI runs `.github/workflows/e2e.yml` in parallel with `ci.yml`. It caches
+`~/.cache/ms-playwright` keyed on `pnpm-lock.yaml` so chromium is only
+downloaded when the lockfile changes. The HTML report is uploaded on every
+run (success or failure) for diff-by-eye, and `test-results/` traces are
+uploaded only on failure.
+**Consequences:** A new safety net catches whole-stack regressions — the
+demo seed is small enough that flakiness from network jitter is impossible.
+The trade-off is that the suite cannot catch real-Jamendo-only or DB-only
+bugs; those should be covered by integration tests against a dedicated
+staging environment in a future PR. Two carefully-chosen fallbacks
+(no-key demo + no-DB Prisma) become semi-load-bearing for CI: if either
+ever stops working as a graceful degradation, the e2e suite breaks loudly,
+which is the right signal.

@@ -33,7 +33,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - [ ] **Telegram bot deep-links** — share playlist as `t.me/<bot>?startapp=playlist_<id>`.
 - [ ] **Lyrics view** — fetch from a free lyrics provider (e.g. lyrics.ovh), cache to Redis, render on Now-Playing.
 - [ ] **Storybook** for `packages/ui` so motion components can be reviewed in isolation.
-- [ ] **Playwright E2E** — at minimum: load home, search a term, play a track, like it, refresh and confirm it persists.
+- [x] **Playwright E2E (smoke)** — `playwright.config.ts` + `e2e/smoke.spec.ts` cover home → click track → mini player, search route, library guest sign-in CTA. New `.github/workflows/e2e.yml` runs headless chromium against the production builds with `DEMO_TRACKS` fixtures (no Postgres, no Jamendo key). _(shipped in #9; ADR-0015)_. Authenticated flows (login, likes, server history) deferred until CI adds a Postgres service.
 
 ## H3 — Long-term / ambitious
 
