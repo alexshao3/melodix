@@ -29,6 +29,9 @@ export default function LibraryPage() {
   }, []);
 
   useEffect(() => {
+    // Guests see localStorage only. Authed users get the server-side history
+    // (cross-device) but localStorage still drives the optimistic update —
+    // see ADR-0014 for the layering.
     setRecent(getRecentlyPlayed());
     const onChange = () => setRecent(getRecentlyPlayed());
     window.addEventListener('melodix:recently-played-changed', onChange);
@@ -45,6 +48,9 @@ export default function LibraryPage() {
     setAuthed(true);
     Promise.allSettled([
       api.likes().then((tracks) => setLikes(tracks)),
+      api.history(50).then((tracks) => {
+        if (tracks.length > 0) setRecent(tracks);
+      }),
       refreshPlaylists(),
     ]).finally(() => setLoading(false));
   }, [refreshPlaylists]);

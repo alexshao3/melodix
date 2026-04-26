@@ -20,8 +20,27 @@ model User {
 
   playlists Playlist[]
   likes     Like[]
+  history   PlayHistory[]
 
   @@map("users")
+}
+
+/**
+ * Server-side "recently played" log. We deliberately store `trackId` as a
+ * free string (typically `jm_<jamendoId>`) rather than as a FK on Track —
+ * Tracks are only persisted lazily and the play log must work for any
+ * Jamendo id the player decides to render. See ADR-0014.
+ */
+model PlayHistory {
+  id       String   @id @default(cuid())
+  userId   String
+  trackId  String
+  playedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, playedAt])
+  @@map("play_history")
 }
 
 model Artist {

@@ -19,9 +19,12 @@ export function LibraryClient() {
 
   const refresh = useCallback(async () => {
     try {
-      const [pl, lk] = await Promise.all([api.myPlaylists(), api.likes()]);
+      const [pl, lk, hist] = await Promise.all([api.myPlaylists(), api.likes(), api.history(30)]);
       setPlaylists(pl);
       setLikes(lk);
+      // Server history wins over localStorage when authed (ADR-0014). Empty
+      // result keeps the localStorage view we already rendered.
+      if (hist.length > 0) setRecent(hist);
     } catch {
       setPlaylists([]);
       setLikes([]);

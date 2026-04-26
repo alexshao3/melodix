@@ -161,3 +161,51 @@ buckets are IP-only today (NestJS throttler default). If we put the API
 behind a CDN that doesn't forward `X-Forwarded-For`, the entire CDN egress
 will share one bucket — addressable by switching to a custom tracker that
 keys on `req.user?.id ?? req.ip` once we have authenticated traffic.
+
+## ADR-0014 — Server-side recently-played: `PlayHistory` model with cap and dedup
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** Recently-played was localStorage-only (ADR-0010), which means it
+disappears across devices and is invisible to any future server-side feature
+(recommendations, smart shuffle, group listening). At the same time we don't
+want `play()` to become a network-blocking operation, the table to grow
+unbounded for power users, or a single replayed track to spam a hundred rows.
+**Decision:** Introduce a `PlayHistory` Prisma model with `(userId, trackId,
+playedAt)` and an `@@index([userId, playedAt])` that powers both the listing
+query and the trim. Mount it under a fresh `HistoryModule` at
+`/api/me/history` rather than overloading `UsersModule` — likes and history
+have very different write shapes (idempotent toggle vs. high-volume append).
+Three rules guard the server side:
+
+1. **Cap at 200 rows per user.** On every insert, run a single
+   `findFirst({ orderBy: { playedAt: 'desc' }, skip: 200 })` to identify the
+   cutoff timestamp and `deleteMany({ playedAt: { lte: cutoff } })`. This
+   stays O(1) on the cap rather than O(playback-minutes), and the table
+   footprint scales linearly with active users.
+2. **30-second same-track dedup.** A single track replayed back-to-back
+   (the player's seek-to-zero / repeat pattern) only writes once. Different
+   tracks immediately after each other are always recorded.
+3. **`trackId` is a free string, not a FK on `Track`.** Tracks are persisted
+   lazily (often never), and the play log must work for any Jamendo id the
+   player decides to render. The same convention is already used for
+   `Like.trackId` in practice.
+
+Both player engines (`apps/web` + `apps/miniapp`) call `api.recordPlay(track.id)`
+fire-and-forget alongside `pushRecentlyPlayed(track)`. The web client is
+wrapped in `safe(...)` so a 401 (guest) or network failure never bubbles up
+to playback. The Library page reads from the server when authed (and only
+overwrites the localStorage view if the server returned a non-empty list, so
+the user never sees their list flash empty during a race).
+
+Read side (`GET /api/me/history?limit=N`) clamps `limit` to `[1, 100]`,
+dedupes by `trackId` so two plays of the same song still produce one row,
+and silently skips trackIds that no longer resolve via Jamendo (rather than
+returning broken card slots).
+**Consequences:** History is now cross-device for authed users and seeds the
+data we'll need for recommendations / smart shuffle later. The 200-row cap
+intentionally forgets old plays — if/when we want a richer "listening
+stats" view we'll keep an aggregated rollup table instead of raising the
+cap. Localstorage remains the source of truth for guests and as an instant
+optimistic update; the two views converge after the first authed
+`GET /api/me/history`.

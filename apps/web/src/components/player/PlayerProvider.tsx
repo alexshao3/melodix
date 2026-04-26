@@ -11,6 +11,7 @@ import {
 } from 'react';
 import type { Track } from '@melodix/shared';
 import { pushRecentlyPlayed } from '@/lib/recently-played';
+import { api } from '@/lib/api';
 
 export type RepeatMode = 'off' | 'one' | 'all';
 
@@ -103,6 +104,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setCurrentTrack(track);
     setPosition(0);
     pushRecentlyPlayed(track);
+    // Mirror the play to the server-side history when authenticated. The
+    // call is fire-and-forget — `api.recordPlay` is wrapped in `safe(...)`
+    // so a 401 (guest) or network blip never reaches playback.
+    if (typeof window !== 'undefined' && localStorage.getItem('melodix.token')) {
+      void api.recordPlay(track.id);
+    }
     audio.play().catch((err) => {
       // eslint-disable-next-line no-console
       console.warn('[melodix] play failed', err);
