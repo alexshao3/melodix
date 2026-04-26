@@ -86,12 +86,16 @@ src/app/
   search/page.tsx     Search (server) + SearchClient.tsx (client)
   library/page.tsx    Auth-gated user library
   login/page.tsx      Login / register
+  albums/[id]/        Album detail page
+  artists/[id]/       Artist detail page
   playlists/[id]/     Playlist detail + PlayPlaylistButton
+  loading.tsx         Skeleton fallback for the home route (others co-located per route)
 src/components/
   hero/               Hero, OrbitingCovers, AudioVisualizer
   layout/             AppShell, Sidebar, MobileNav, TopBar
+  motion/             MotionRoot ← framer-motion `MotionConfig reducedMotion="user"`
   player/             PlayerProvider, PlayerBar  ← global audio engine
-  sections/           Section wrappers, TrackList, TrackGrid, PlaylistGrid, MoodPills
+  sections/           Section wrappers, TrackList, TrackGrid, PlaylistGrid, MoodPills, PlayTracksButton
 src/lib/
   api.ts              fetch helpers wrapping NEXT_PUBLIC_API_URL
   cn.ts               className helper
@@ -113,12 +117,13 @@ Telegram-native chrome.
 ```
 src/app/
   page.tsx           Mini home
-  discover/, search/, playlists/[id]/
+  discover/, search/, playlists/[id]/, albums/[id]/, artists/[id]/
 src/components/
   PlayerProvider.tsx     leaner audio engine (no MediaSession-heavy bits)
   MiniPlayer.tsx         compact player UI
   MiniNav.tsx            bottom nav
   MiniTrackRow.tsx       single-line track row
+  MotionRoot.tsx         framer-motion `MotionConfig reducedMotion="user"`
   TelegramSync.tsx       reads window.Telegram.WebApp, expands viewport, syncs theme, triggers haptics
 src/lib/
   api.ts                 same fetch wrapper, different base URL
@@ -141,8 +146,28 @@ WebView whose API surface is restricted.
 ## `packages/ui` — shared React components
 
 `AlbumCard`, `ArtistCard`, `TrackCard`, `PlaylistCard`, `GenrePill`,
-`GradientButton`, `AudioWave`, `LikeButton`, `Marquee`, `Spinner`. Use these
-before building yours from scratch.
+`GradientButton`, `AudioWave`, `LikeButton`, `Marquee`, `Spinner`,
+`Skeleton`, `TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton`. Use
+these before building yours from scratch.
+
+## Tests
+
+Unit tests live alongside the API (`apps/api/`) and run via `pnpm --filter
+@melodix/api test`. The Jest config at
+[`apps/api/jest.config.ts`](../../apps/api/jest.config.ts) maps
+`@melodix/shared` to the shared package's `src/` so cross-package tests can
+live next to the API surface. Today's suites:
+
+- `auth/auth.service.spec.ts` — password register/login, Telegram
+  `initData` verification (real HMAC-SHA256), `telegramLogin` upsert.
+- `__shared-tests__/format.spec.ts` — `formatDuration`, `formatNumber`.
+
+## Pre-commit
+
+Husky 9 is set up via the root `prepare` script. The hook at
+[`.husky/pre-commit`](../../.husky/pre-commit) runs `pnpm exec lint-staged`,
+which currently formats staged source files with prettier (config in the root
+`package.json`'s `lint-staged` field).
 
 ## Data flow (request lifecycle)
 

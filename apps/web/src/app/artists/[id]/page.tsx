@@ -1,0 +1,71 @@
+import { notFound } from 'next/navigation';
+import { User } from 'lucide-react';
+import { formatNumber } from '@melodix/shared';
+import { TrackList } from '@/components/sections/TrackList';
+import { PlayTracksButton } from '@/components/sections/PlayTracksButton';
+import { Section } from '@/components/sections/Section';
+import { api } from '@/lib/api';
+
+export const dynamic = 'force-dynamic';
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function ArtistPage({ params }: PageProps) {
+  const { id } = await params;
+  let data;
+  try {
+    data = await api.artist(id);
+  } catch {
+    notFound();
+  }
+  const { artist, tracks } = data;
+  const topTracks = tracks.slice(0, 10);
+
+  return (
+    <div>
+      <header className="relative mt-2 flex flex-col items-start gap-6 overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] px-6 py-10 sm:flex-row sm:items-end sm:px-10">
+        <div
+          aria-hidden
+          className="aurora animate-gradient-pan absolute inset-0 -z-10 opacity-40"
+        />
+        <div className="relative h-44 w-44 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-600 to-cyan-500 shadow-2xl shadow-black/40">
+          {artist.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={artist.image} alt={artist.name} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <User className="h-16 w-16 text-white/70" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1">
+          <div className="text-xs font-medium uppercase tracking-widest text-zinc-400">Artist</div>
+          <h1 className="mt-1 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
+            {artist.name}
+          </h1>
+          {typeof artist.followers === 'number' && artist.followers > 0 && (
+            <div className="mt-2 text-sm text-zinc-300">
+              {formatNumber(artist.followers)} followers
+            </div>
+          )}
+          {artist.bio && (
+            <p className="mt-3 max-w-2xl text-sm text-zinc-300 line-clamp-3">{artist.bio}</p>
+          )}
+          <div className="mt-6">
+            <PlayTracksButton tracks={tracks} label="Play top tracks" />
+          </div>
+        </div>
+      </header>
+
+      {topTracks.length > 0 ? (
+        <Section title="Top tracks" subtitle="Most-played from this artist.">
+          <TrackList tracks={topTracks} />
+        </Section>
+      ) : (
+        <p className="mt-8 text-sm text-zinc-400">No tracks available for this artist.</p>
+      )}
+    </div>
+  );
+}

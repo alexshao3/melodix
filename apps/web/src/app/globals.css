@@ -20,8 +20,11 @@ body {
 }
 
 body {
-  background-image:
-    radial-gradient(900px 600px at 80% -10%, rgba(217, 70, 239, 0.18), transparent 60%),
+  background-image: radial-gradient(
+      900px 600px at 80% -10%,
+      rgba(217, 70, 239, 0.18),
+      transparent 60%
+    ),
     radial-gradient(700px 500px at -10% 10%, rgba(34, 211, 238, 0.18), transparent 60%),
     radial-gradient(600px 600px at 50% 110%, rgba(16, 185, 129, 0.12), transparent 70%),
     linear-gradient(180deg, #050507 0%, #08080d 100%);
@@ -35,8 +38,7 @@ body {
 
 /* Aurora background mesh */
 .aurora {
-  background:
-    radial-gradient(1200px 700px at 0% 0%, rgba(217, 70, 239, 0.35), transparent 60%),
+  background: radial-gradient(1200px 700px at 0% 0%, rgba(217, 70, 239, 0.35), transparent 60%),
     radial-gradient(900px 600px at 100% 0%, rgba(34, 211, 238, 0.35), transparent 60%),
     radial-gradient(900px 700px at 50% 120%, rgba(16, 185, 129, 0.35), transparent 60%);
   background-size: 200% 200%;
@@ -83,13 +85,38 @@ body {
 
 /* Audio wave animation keyframes */
 @keyframes audiowave {
-  0%, 100% { transform: scaleY(0.4); }
-  50% { transform: scaleY(1); }
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/*
+ * Honour prefers-reduced-motion across the whole app for all *CSS-driven*
+ * animations and transitions. framer-motion's `<MotionConfig reducedMotion="user">`
+ * (set in app/layout.tsx) covers JS-driven animations.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
 
 /* Smooth focus */
 button:focus-visible,
@@ -100,24 +127,28 @@ a:focus-visible {
 }
 
 /* Sliders (range inputs) */
-input[type="range"].player-range {
+input[type='range'].player-range {
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
   height: 16px;
   cursor: pointer;
 }
-input[type="range"].player-range::-webkit-slider-runnable-track {
+input[type='range'].player-range::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 9999px;
-  background: linear-gradient(to right, white var(--progress, 0%), rgba(255, 255, 255, 0.15) var(--progress, 0%));
+  background: linear-gradient(
+    to right,
+    white var(--progress, 0%),
+    rgba(255, 255, 255, 0.15) var(--progress, 0%)
+  );
 }
-input[type="range"].player-range::-moz-range-track {
+input[type='range'].player-range::-moz-range-track {
   height: 4px;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.15);
 }
-input[type="range"].player-range::-webkit-slider-thumb {
+input[type='range'].player-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 12px;
   width: 12px;
@@ -125,13 +156,15 @@ input[type="range"].player-range::-webkit-slider-thumb {
   background: white;
   margin-top: -4px;
   box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
 }
-input[type="range"].player-range:hover::-webkit-slider-thumb {
+input[type='range'].player-range:hover::-webkit-slider-thumb {
   box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.12);
   transform: scale(1.15);
 }
-input[type="range"].player-range::-moz-range-thumb {
+input[type='range'].player-range::-moz-range-thumb {
   height: 12px;
   width: 12px;
   border: 0;

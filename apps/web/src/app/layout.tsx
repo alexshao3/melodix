@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { PlayerProvider } from '@/components/player/PlayerProvider';
 import { AppShell } from '@/components/layout/AppShell';
+import { MotionRoot } from '@/components/motion/MotionRoot';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
@@ -30,9 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${display.variable}`}>
       <body className="font-sans">
-        <PlayerProvider>
-          <AppShell>{children}</AppShell>
-        </PlayerProvider>
+        <MotionRoot>
+          <PlayerProvider>
+            <AppShell>{children}</AppShell>
+          </PlayerProvider>
+        </MotionRoot>
       </body>
     </html>
   );

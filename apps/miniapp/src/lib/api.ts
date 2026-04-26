@@ -1,4 +1,4 @@
-import type { Playlist, SearchResults, Track } from '@melodix/shared';
+import type { Album, Artist, Playlist, SearchResults, Track } from '@melodix/shared';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -40,13 +40,24 @@ export const api = {
   byGenre: (genre: string) =>
     safe<Track[]>(`/api/tracks/genre/${encodeURIComponent(genre)}?limit=20`, []),
   search: (q: string) =>
-    safe<SearchResults>(
-      `/api/search?q=${encodeURIComponent(q)}`,
-      { tracks: [], albums: [], artists: [], playlists: [] },
-    ),
+    safe<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`, {
+      tracks: [],
+      albums: [],
+      artists: [],
+      playlists: [],
+    }),
   featured: () => safe<Playlist[]>(`/api/playlists/featured`, []),
   playlist: (id: string) =>
-    safe<{ playlist: Playlist; tracks: Track[] } | null>(`/api/playlists/${encodeURIComponent(id)}`, null),
-  telegramLogin: (initData: string) =>
-    post<{ token: string }>(`/api/auth/telegram`, { initData }),
+    safe<{ playlist: Playlist; tracks: Track[] } | null>(
+      `/api/playlists/${encodeURIComponent(id)}`,
+      null,
+    ),
+  album: (id: string) =>
+    safe<{ album: Album; tracks: Track[] } | null>(`/api/albums/${encodeURIComponent(id)}`, null),
+  artist: (id: string) =>
+    safe<{ artist: Artist; tracks: Track[] } | null>(
+      `/api/artists/${encodeURIComponent(id)}`,
+      null,
+    ),
+  telegramLogin: (initData: string) => post<{ token: string }>(`/api/auth/telegram`, { initData }),
 };

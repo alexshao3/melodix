@@ -20,6 +20,8 @@
 | Prettier             | ^3.3.3   |
 | ESLint (web/miniapp) | ^9.17.0  |
 | ESLint (api)         | ^8.57.1  |
+| husky                | ^9.1.7   |
+| lint-staged          | ^15.5.2  |
 | Tailwind CSS         | ^3.4.17  |
 | PostCSS              | ^8.4.49  |
 | autoprefixer         | ^10.4.20 |
@@ -84,16 +86,17 @@
 
 ## Top-level scripts (`pnpm <script>`)
 
-|                  | What it does                                                       |
-| ---------------- | ------------------------------------------------------------------ |
-| `pnpm install`   | Install all workspaces                                             |
-| `pnpm dev`       | `turbo run dev --concurrency=20` — web + miniapp + api in parallel |
-| `pnpm build`     | Build everything                                                   |
-| `pnpm typecheck` | `tsc --noEmit` per package                                         |
-| `pnpm lint`      | `next lint` / `eslint` per package, `--max-warnings 0`             |
-| `pnpm test`      | Run jest suites (currently only `apps/api`, `--passWithNoTests`)   |
-| `pnpm format`    | Prettier write across `**/*.{ts,tsx,js,jsx,json,md}`               |
-| `pnpm clean`     | Delete every package's build outputs + root `node_modules`         |
+|                     | What it does                                                       |
+| ------------------- | ------------------------------------------------------------------ |
+| `pnpm install`      | Install all workspaces                                             |
+| `pnpm dev`          | `turbo run dev --concurrency=20` — web + miniapp + api in parallel |
+| `pnpm build`        | Build everything                                                   |
+| `pnpm typecheck`    | `tsc --noEmit` per package                                         |
+| `pnpm lint`         | `next lint` / `eslint` per package, `--max-warnings 0`             |
+| `pnpm test`         | Run jest suites (currently only `apps/api`, 18 tests pass)         |
+| `pnpm format`       | Prettier write across `**/*.{ts,tsx,js,jsx,json,md}`               |
+| `pnpm format:check` | Prettier `--check` (CI-friendly)                                   |
+| `pnpm clean`        | Delete every package's build outputs + root `node_modules`         |
 
 ## Per-app scripts
 
@@ -120,5 +123,23 @@ pnpm --filter @melodix/miniapp dev
 4. `pnpm lint`
 5. `pnpm build`
 
-`.github/workflows/context-freshness.yml` (added in this PR) runs alongside
-and warns if a PR changes code without updating any `.agents/context/` file.
+`.github/workflows/context-freshness.yml` runs alongside and warns if a PR
+changes code without updating any `.agents/context/` file.
+
+## Pre-commit (local)
+
+`husky@9` is installed via the root `prepare` script so `pnpm install` wires
+everything up automatically. The hook at `.husky/pre-commit` runs
+`pnpm exec lint-staged`, which currently runs `prettier --write` on staged
+`*.{ts,tsx,js,jsx,json,md,yml,yaml}` files. Configuration lives in the root
+`package.json` `lint-staged` field. ESLint is intentionally **not** in the
+pre-commit chain yet (kept fast); run `pnpm lint` manually before pushing.
+
+## Tests (where & how)
+
+The `pnpm test` task at the root delegates to Turborepo. Today only
+`apps/api` has Jest configured ([`apps/api/jest.config.ts`](../../apps/api/jest.config.ts)),
+and it owns the cross-package test suite via a `moduleNameMapper` that points
+`@melodix/shared` at `packages/shared/src`. To add tests for a different
+package either co-locate them under `apps/api/src/` (cheap) or stand up a
+separate Jest config in that package (preferred long-term).

@@ -14,14 +14,14 @@ Statuses: `[ ]` not started · `[~]` in progress · `[x]` shipped · `[-]` dropp
 
 These finish the v0 → v1 polish so the product feels complete to first-time visitors.
 
-- [ ] **Album & artist detail pages** — full track lists, "Play album" / "Play radio" buttons, biography section. _(see `FEATURES.md` row "Album / artist dedicated pages")_
+- [x] **Album & artist detail pages** — full track lists, hero header, Play album / Play top tracks button, biography section. Web at `/albums/[id]` & `/artists/[id]`; Mini App equivalents in `apps/miniapp/src/app/`. _(shipped in #4)_
 - [ ] **Library page v1** — sections for "Your playlists", "Liked songs", "Recently played"; editable.
 - [ ] **Playlist editor UI** — rename, reorder, set cover, toggle public/private. Backend exists, UI doesn't.
-- [ ] **Skeleton loaders** for every list / grid (home, discover, search, library).
-- [ ] **`prefers-reduced-motion` audit** — disable Hero animations & marquee scrolling when set.
-- [ ] **Light-mode toggle on web** — match the Mini App's theme-sync flexibility.
-- [ ] **First Jest test suite** — start with `apps/api/src/auth/auth.service.spec.ts` (password hashing, Telegram `initData` verification) and `packages/shared/src/__tests__/format.test.ts`.
-- [ ] **Pre-commit hook** — `lint-staged` running prettier + `eslint --fix` on changed files; `husky` install in `pnpm install` lifecycle.
+- [x] **Skeleton loaders** — `Skeleton`, `TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton` exported from `@melodix/ui`; per-route `loading.tsx` files for home, discover, library, album/artist/playlist details. _(shipped in #4)_
+- [x] **`prefers-reduced-motion` audit** — global CSS rule in `app/globals.css` collapses CSS animations & transitions; `MotionRoot` wraps both apps in `MotionConfig reducedMotion="user"` so framer-motion respects it too. _(shipped in #4)_
+- [ ] **Light-mode toggle on web** — match the Mini App's theme-sync flexibility. _(deferred to its own PR — needs `dark:` audit across every component before flipping the toggle)_
+- [x] **First Jest test suite** — `apps/api/src/auth/auth.service.spec.ts` (12 tests covering password register/login + Telegram `initData` verification + `telegramLogin` upsert) and `apps/api/src/__shared-tests__/format.spec.ts` (6 tests covering `formatDuration` + `formatNumber`). Jest runs on real bcrypt, no mocks of crypto. _(shipped in #4)_
+- [x] **Pre-commit hook** — `husky@9` configured via `prepare` script; `.husky/pre-commit` runs `pnpm exec lint-staged`; `lint-staged` config in root `package.json` runs prettier on staged source files. ESLint integration is a follow-up. _(shipped in #4)_
 
 ## H2 — Mid-term (next ~1–2 months)
 
@@ -56,6 +56,11 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - [ ] **CONTRIBUTING.md** — onboard external contributors.
 
 ## Backlog (unsized ideas — promote into H1/H2/H3 when picked up)
+
+- Add `eslint --fix` to the `lint-staged` chain (currently prettier-only).
+- Wire artist links from track rows (`TrackCard` row variant → `/artists/:id`).
+- Album list from artist page (Mini App + web).
+- Surface artist/album cards in Mini App search (currently shows tracks only).
 
 - Smart shuffle (avoid recently played, weight by likes).
 - "Daily mix" auto-playlists per genre.

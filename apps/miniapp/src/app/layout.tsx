@@ -6,6 +6,7 @@ import { PlayerProvider } from '@/components/PlayerProvider';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { TelegramSync } from '@/components/TelegramSync';
 import { MiniNav } from '@/components/MiniNav';
+import { MotionRoot } from '@/components/MotionRoot';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
@@ -28,12 +29,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${display.variable}`}>
       <body className="font-sans">
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
-        <PlayerProvider>
-          <TelegramSync />
-          <main className="mx-auto w-full max-w-xl px-4 pb-32 pt-4">{children}</main>
-          <MiniPlayer />
-          <MiniNav />
-        </PlayerProvider>
+        <MotionRoot>
+          <PlayerProvider>
+            <TelegramSync />
+            <main className="mx-auto w-full max-w-xl px-4 pb-32 pt-4">{children}</main>
+            <MiniPlayer />
+            <MiniNav />
+          </PlayerProvider>
+        </MotionRoot>
       </body>
     </html>
   );
