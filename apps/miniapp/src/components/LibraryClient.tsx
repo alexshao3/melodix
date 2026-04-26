@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Heart, History, ListMusic, Plus } from 'lucide-react';
-import type { Playlist, Track } from '@melodix/shared';
+import { Heart, History, ListMusic, Plus, User, UserPlus } from 'lucide-react';
+import type { Artist, Playlist, Track } from '@melodix/shared';
 import { api } from '@/lib/api';
 import { getRecentlyPlayed } from '@/lib/recently-played';
 import { MiniTrackRow } from './MiniTrackRow';
@@ -14,20 +14,28 @@ export function LibraryClient() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [likes, setLikes] = useState<Track[]>([]);
   const [recent, setRecent] = useState<Track[]>([]);
+  const [follows, setFollows] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
-      const [pl, lk, hist] = await Promise.all([api.myPlaylists(), api.likes(), api.history(30)]);
+      const [pl, lk, hist, fl] = await Promise.all([
+        api.myPlaylists(),
+        api.likes(),
+        api.history(30),
+        api.follows(),
+      ]);
       setPlaylists(pl);
       setLikes(lk);
+      setFollows(fl);
       // Server history wins over localStorage when authed (ADR-0014). Empty
       // result keeps the localStorage view we already rendered.
       if (hist.length > 0) setRecent(hist);
     } catch {
       setPlaylists([]);
       setLikes([]);
+      setFollows([]);
     }
   }, []);
 
@@ -142,6 +150,31 @@ export function LibraryClient() {
               </div>
             )}
           </Section>
+
+          {follows.length > 0 && (
+            <Section title="Following" icon={<UserPlus className="h-4 w-4" />}>
+              <ul className="flex flex-col">
+                {follows.map((a) => (
+                  <li key={a.id}>
+                    <Link
+                      href={`/artists/${a.id}`}
+                      className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm text-white active:bg-white/10"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-600 to-cyan-500">
+                        {a.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={a.image} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <User className="h-4 w-4 text-white" />
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-medium">{a.name}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
 
           {recent.length > 0 && (
             <Section title="Recently played" icon={<History className="h-4 w-4" />}>

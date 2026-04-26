@@ -21,8 +21,27 @@ model User {
   playlists Playlist[]
   likes     Like[]
   history   PlayHistory[]
+  follows   Follow[]
 
   @@map("users")
+}
+
+/**
+ * Artist follow log. Like `PlayHistory.trackId`, `artistId` is a free string
+ * (`jm_<jamendoId>` in practice) rather than a FK on Artist — Artists are
+ * persisted lazily and the follow surface must work for any Jamendo id.
+ * See ADR-0016.
+ */
+model Follow {
+  userId    String
+  artistId  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, artistId])
+  @@index([userId, createdAt])
+  @@map("follows")
 }
 
 /**

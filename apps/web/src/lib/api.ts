@@ -106,6 +106,18 @@ export const api = {
       },
     ),
   clearHistory: () => request<{ ok: true }>(`/api/me/history`, { method: 'DELETE' }),
+
+  follows: () => safe<Artist[]>(`/api/me/follows`, []),
+  followIds: () => safe<string[]>(`/api/me/follows/ids`, []),
+  follow: (artistId: string) =>
+    request<{ following: true }>(`/api/me/follows/${encodeURIComponent(artistId)}`, {
+      method: 'POST',
+    }),
+  unfollow: (artistId: string) =>
+    request<{ following: false }>(`/api/me/follows/${encodeURIComponent(artistId)}`, {
+      method: 'DELETE',
+    }),
+
   like: (trackId: string) =>
     request<{ liked: boolean }>(`/api/me/likes/${encodeURIComponent(trackId)}`, { method: 'POST' }),
   unlike: (trackId: string) =>

@@ -256,3 +256,47 @@ staging environment in a future PR. Two carefully-chosen fallbacks
 (no-key demo + no-DB Prisma) become semi-load-bearing for CI: if either
 ever stops working as a graceful degradation, the e2e suite breaks loudly,
 which is the right signal.
+
+## ADR-0016 — Follow artists: free-string `artistId` + composite PK
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** Adding "Follow artists" requires a join table between `User` and
+artists. Two competing models:
+
+1. **FK to a local `Artist` row** — clean schema, but `Artist` rows are only
+   persisted lazily (the API hydrates them on demand via Jamendo and never
+   does a full sync). A `FOREIGN KEY` constraint would fail any time a user
+   tries to follow an artist whose row hasn't been materialized yet, which
+   is the common case.
+2. **Free-string `artistId`** — same shape as `Like.trackId` and
+   `PlayHistory.trackId`: `userId` + `artistId` (typically `jm_<jamendoId>`)
+   with no FK on the artist side, and a composite primary key
+   `[userId, artistId]` so duplicates are impossible at the DB level.
+
+**Decision:** Adopt option 2. The `Follow` model has `userId`, `artistId`,
+`createdAt`, `@@id([userId, artistId])`, and `@@index([userId, createdAt])`
+for the most common query (newest-first list per user). Cascade delete on
+`User`. No FK on the artist side.
+
+The `FollowsService` mirrors the existing `UsersService.like` shape:
+`upsert` for follow (idempotent), `deleteMany` for unfollow (no-op if the
+row doesn't exist), and `findMany` then per-row Jamendo hydration for
+list. A separate `GET /api/me/follows/ids` endpoint returns just the
+artist-ID strings so the FE can decide "is this artist already followed?"
+in one round-trip without paying the hydration cost.
+
+**Consequences:**
+
+- **Pros.** Works today, end to end, with zero seed data. Same precedent as
+  `Like` and `PlayHistory`. Composite PK guarantees no duplicate follow
+  rows. Fast lookups via the `[userId, createdAt]` index.
+- **Cons.** Same orphan risk as `Like` / `PlayHistory`: if Jamendo retires
+  an artist, `getArtistById` returns `null` and the row silently disappears
+  from the list view. The row stays in the DB but is invisible. We accept
+  this — it's identical to the existing pattern and a future migration to
+  a real `Artist` cache table can backfill cleanly.
+- **Future direction.** Once we add a periodic Artist materialization job
+  (and cache hydration via Redis), we can switch to option 1 with a
+  single migration: add an `Artist` row for every distinct `Follow.artistId`,
+  then add the FK. The composite PK survives that migration unchanged.
