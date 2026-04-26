@@ -13,6 +13,7 @@ import { SearchModule } from './search/search.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { HistoryModule } from './history/history.module';
+import { FollowsModule } from './follows/follows.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -45,6 +46,7 @@ import { HealthController } from './health.controller';
     PlaylistsModule,
     SearchModule,
     HistoryModule,
+    FollowsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

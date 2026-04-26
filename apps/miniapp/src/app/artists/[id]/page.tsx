@@ -3,6 +3,7 @@ import { User } from 'lucide-react';
 import { formatNumber } from '@melodix/shared';
 import { api } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
+import { FollowButton } from '@/components/FollowButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,9 @@ export default async function MiniArtist({ params }: PageProps) {
         {artist.bio && (
           <p className="mt-3 text-xs leading-relaxed text-zinc-300 line-clamp-3">{artist.bio}</p>
         )}
+        <div className="mt-3">
+          <FollowButton artistId={artist.id} />
+        </div>
       </header>
 
       <div>

@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Heart, History, ListMusic, Plus, Sparkles } from 'lucide-react';
+import { Heart, History, ListMusic, Plus, Sparkles, UserPlus } from 'lucide-react';
 import { Section } from '@/components/sections/Section';
 import { TrackList } from '@/components/sections/TrackList';
-import { GradientButton, PlaylistCard, Spinner } from '@melodix/ui';
-import type { Playlist, Track } from '@melodix/shared';
+import { ArtistCard, GradientButton, PlaylistCard, Spinner } from '@melodix/ui';
+import type { Artist, Playlist, Track } from '@melodix/shared';
 import { api } from '@/lib/api';
 import { CreatePlaylistDialog } from '@/components/library/CreatePlaylistDialog';
 import { getRecentlyPlayed } from '@/lib/recently-played';
@@ -16,6 +16,7 @@ export default function LibraryPage() {
   const [likes, setLikes] = useState<Track[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [recent, setRecent] = useState<Track[]>([]);
+  const [follows, setFollows] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -51,6 +52,7 @@ export default function LibraryPage() {
       api.history(50).then((tracks) => {
         if (tracks.length > 0) setRecent(tracks);
       }),
+      api.follows().then((artists) => setFollows(artists)),
       refreshPlaylists(),
     ]).finally(() => setLoading(false));
   }, [refreshPlaylists]);
@@ -150,6 +152,22 @@ export default function LibraryPage() {
               <TrackList tracks={likes} />
             )}
           </Section>
+
+          {follows.length > 0 && (
+            <Section
+              title="Following"
+              subtitle={`${follows.length} ${follows.length === 1 ? 'artist' : 'artists'}`}
+              icon={<UserPlus className="h-4 w-4" />}
+            >
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {follows.map((artist, index) => (
+                  <Link key={artist.id} href={`/artists/${artist.id}`}>
+                    <ArtistCard artist={artist} index={index} />
+                  </Link>
+                ))}
+              </div>
+            </Section>
+          )}
 
           {recent.length > 0 && (
             <Section

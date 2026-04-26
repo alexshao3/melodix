@@ -4,6 +4,7 @@ import { formatNumber } from '@melodix/shared';
 import { TrackList } from '@/components/sections/TrackList';
 import { PlayTracksButton } from '@/components/sections/PlayTracksButton';
 import { Section } from '@/components/sections/Section';
+import { FollowButton } from '@/components/artists/FollowButton';
 import { api } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -53,8 +54,9 @@ export default async function ArtistPage({ params }: PageProps) {
           {artist.bio && (
             <p className="mt-3 max-w-2xl text-sm text-zinc-300 line-clamp-3">{artist.bio}</p>
           )}
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <PlayTracksButton tracks={tracks} label="Play top tracks" />
+            <FollowButton artistId={artist.id} />
           </div>
         </div>
       </header>
