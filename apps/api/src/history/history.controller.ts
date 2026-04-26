@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { IsInt, IsNotEmpty, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import type { Request } from 'express';
 import { HistoryService } from './history.service';
 
@@ -16,6 +17,11 @@ class RecordPlayDto {
 }
 
 class ListHistoryDto {
+  // Query params arrive as strings; the global ValidationPipe runs with
+  // `transform: true` but without `enableImplicitConversion`, so we need
+  // `@Type(() => Number)` to coerce `?limit=50` before `@IsInt` runs.
+  @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
