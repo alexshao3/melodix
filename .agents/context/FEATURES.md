@@ -41,15 +41,15 @@
 
 ## Look & feel
 
-| Status | Feature                                                   | Where                                                                                         | Notes                                                             |
-| ------ | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| ✅     | Aurora gradients & motion-rich Hero                       | `apps/web/src/components/hero/{Hero,OrbitingCovers,AudioVisualizer}.tsx`                      |                                                                   |
-| ✅     | App shell (sidebar / topbar / mobile nav)                 | `apps/web/src/components/layout/`                                                             |                                                                   |
-| ✅     | Reusable card / pill / button library                     | `packages/ui/src/components/`                                                                 |                                                                   |
-| ✅     | Telegram theme sync (light/dark + accent)                 | `apps/miniapp/src/components/TelegramSync.tsx`                                                | Reads `Telegram.WebApp.themeParams`                               |
-| 🟡     | Dark mode on web                                          | partial — defaults dark, no toggle                                                            |                                                                   |
-| ✅     | Reduced-motion mode (`prefers-reduced-motion` everywhere) | `apps/{web,miniapp}/src/app/globals.css` + `MotionRoot` (`MotionConfig reducedMotion="user"`) | CSS animations & framer-motion both respect user pref             |
-| ✅     | Skeleton loaders                                          | `packages/ui/src/components/Skeleton.tsx` + per-route `loading.tsx`                           | Shimmer skeletons for tracks/cards/headers; honour reduced-motion |
+| Status | Feature                                                   | Where                                                                                                               | Notes                                                                                    |
+| ------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| ✅     | Aurora gradients & motion-rich Hero                       | `apps/web/src/components/hero/{Hero,OrbitingCovers,AudioVisualizer}.tsx`                                            |                                                                                          |
+| ✅     | App shell (sidebar / topbar / mobile nav)                 | `apps/web/src/components/layout/`                                                                                   |                                                                                          |
+| ✅     | Reusable card / pill / button library                     | `packages/ui/src/components/`                                                                                       |                                                                                          |
+| ✅     | Telegram theme sync (light/dark + accent)                 | `apps/miniapp/src/components/TelegramSync.tsx`                                                                      | Reads `Telegram.WebApp.themeParams`                                                      |
+| ✅     | Dark / light mode on web with toggle                      | `apps/web/src/components/theme/{ThemeProvider,ThemeToggle}.tsx` + `apps/web/src/app/globals.css` `.light` overrides | `next-themes` (attribute=class), defaults `dark`, persists user choice; toggle in TopBar |
+| ✅     | Reduced-motion mode (`prefers-reduced-motion` everywhere) | `apps/{web,miniapp}/src/app/globals.css` + `MotionRoot` (`MotionConfig reducedMotion="user"`)                       | CSS animations & framer-motion both respect user pref                                    |
+| ✅     | Skeleton loaders                                          | `packages/ui/src/components/Skeleton.tsx` + per-route `loading.tsx`                                                 | Shimmer skeletons for tracks/cards/headers; honour reduced-motion                        |
 
 ## Backend / platform
 

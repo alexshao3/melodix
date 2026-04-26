@@ -4,6 +4,7 @@ import './globals.css';
 import { PlayerProvider } from '@/components/player/PlayerProvider';
 import { AppShell } from '@/components/layout/AppShell';
 import { MotionRoot } from '@/components/motion/MotionRoot';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
@@ -29,13 +30,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable}`}>
+    <html lang="en" className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
       <body className="font-sans">
-        <MotionRoot>
-          <PlayerProvider>
-            <AppShell>{children}</AppShell>
-          </PlayerProvider>
-        </MotionRoot>
+        <ThemeProvider>
+          <MotionRoot>
+            <PlayerProvider>
+              <AppShell>{children}</AppShell>
+            </PlayerProvider>
+          </MotionRoot>
+        </ThemeProvider>
       </body>
     </html>
   );

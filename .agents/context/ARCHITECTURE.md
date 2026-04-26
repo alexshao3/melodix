@@ -96,6 +96,7 @@ src/components/
   motion/             MotionRoot ← framer-motion `MotionConfig reducedMotion="user"`
   player/             PlayerProvider, PlayerBar  ← global audio engine
   sections/           Section wrappers, TrackList, TrackGrid, PlaylistGrid, MoodPills, PlayTracksButton
+  theme/              ThemeProvider (next-themes), ThemeToggle (Sun/Moon button)
 src/lib/
   api.ts              fetch helpers wrapping NEXT_PUBLIC_API_URL
   cn.ts               className helper
@@ -161,6 +162,25 @@ live next to the API surface. Today's suites:
 - `auth/auth.service.spec.ts` — password register/login, Telegram
   `initData` verification (real HMAC-SHA256), `telegramLogin` upsert.
 - `__shared-tests__/format.spec.ts` — `formatDuration`, `formatNumber`.
+
+## Theming
+
+`apps/web` uses [`next-themes`](https://github.com/pacocoursey/next-themes)
+with `attribute="class"`, `defaultTheme="dark"`, `enableSystem`. The
+`ThemeProvider` lives at `apps/web/src/components/theme/ThemeProvider.tsx`
+and wraps the entire app in `apps/web/src/app/layout.tsx`. The toggle
+(`ThemeToggle`) is mounted in `TopBar`.
+
+Light-theme styles are implemented as **scoped overrides** in
+`apps/web/src/app/globals.css` under `.light ...` selectors, because the
+codebase predates a theming system and uses a lot of raw `text-white`,
+`bg-white/X`, and `bg-black/X` classes. Migrating each component to
+semantic tokens (`text-fg`, `bg-surface/X`, …) is on the ROADMAP backlog.
+See ADR-0009 for the rationale.
+
+The Mini App still relies on `TelegramSync` (Telegram-supplied theme
+parameters) and is **not** wired through `next-themes` — its container's
+theme is dictated by the host Telegram client.
 
 ## Pre-commit
 
