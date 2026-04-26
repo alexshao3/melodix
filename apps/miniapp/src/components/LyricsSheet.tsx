@@ -41,6 +41,13 @@ export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) 
         if (res.lyrics) {
           setText(res.lyrics);
           setStatus('found');
+        } else if (res.source === 'none') {
+          // The miniapp `safe()` wrapper swallows network errors and
+          // returns `{ source: 'none' }`; the server also tags transient
+          // upstream failures with `source: 'none'`. Either way it's a
+          // retry-able state, distinct from a genuine provider miss
+          // (`source: 'lyrics.ovh'` with `lyrics === null`).
+          setStatus('error');
         } else {
           setStatus('missing');
         }
