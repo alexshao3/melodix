@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { api } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
+import { PlaylistOwnerGate } from '@/components/PlaylistOwnerGate';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,9 @@ export default async function MiniPlaylist({ params }: PageProps) {
             ) : null}
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-400">Playlist</div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-400">
+              {playlist.isPublic ? 'Playlist' : 'Private playlist'}
+            </div>
             <h1 className="truncate font-display text-xl font-bold text-white">{playlist.name}</h1>
             <div className="text-xs text-zinc-400">{tracks.length} tracks</div>
           </div>
@@ -32,6 +35,9 @@ export default async function MiniPlaylist({ params }: PageProps) {
         {playlist.description && (
           <p className="mt-3 text-xs text-zinc-300">{playlist.description}</p>
         )}
+        <div className="mt-3">
+          <PlaylistOwnerGate playlist={playlist} />
+        </div>
       </header>
       <div className="flex flex-col">
         {tracks.map((t, i) => (

@@ -1,7 +1,16 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { Track } from '@melodix/shared';
+import { pushRecentlyPlayed } from '@/lib/recently-played';
 
 export type RepeatMode = 'off' | 'one' | 'all';
 
@@ -93,6 +102,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     audio.src = track.streamUrl ?? track.audioUrl;
     setCurrentTrack(track);
     setPosition(0);
+    pushRecentlyPlayed(track);
     audio.play().catch((err) => {
       // eslint-disable-next-line no-console
       console.warn('[melodix] play failed', err);
@@ -103,7 +113,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     (track: Track, newQueue?: Track[]) => {
       if (newQueue) {
         const idx = newQueue.findIndex((t) => t.id === track.id);
-        const upcoming = idx >= 0 ? newQueue.slice(idx + 1) : newQueue.filter((t) => t.id !== track.id);
+        const upcoming =
+          idx >= 0 ? newQueue.slice(idx + 1) : newQueue.filter((t) => t.id !== track.id);
         setQueue(upcoming);
       }
       if (currentTrack && currentTrack.id !== track.id) {
@@ -219,7 +230,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      )
+        return;
       if (e.code === 'Space') {
         e.preventDefault();
         toggle();

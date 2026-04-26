@@ -5,15 +5,17 @@ export interface SectionProps {
   title: string;
   subtitle?: string;
   href?: string;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function Section({ title, subtitle, href, children }: SectionProps) {
+export function Section({ title, subtitle, href, icon, children }: SectionProps) {
   return (
     <section className="mt-12">
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h2 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            {icon && <span className="text-zinc-300">{icon}</span>}
             {title}
           </h2>
           {subtitle && <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>}

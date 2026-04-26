@@ -1,15 +1,15 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  ArrayMinSize,
+  ArrayUnique,
+  IsArray,
+  IsBoolean,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import type { Request } from 'express';
 import { PlaylistsService } from './playlists.service';
 
@@ -25,6 +25,36 @@ class CreatePlaylistDto {
   @IsOptional()
   @IsString()
   description?: string;
+}
+
+class UpdatePlaylistDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  description?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  cover?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
+}
+
+class ReorderTracksDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsString({ each: true })
+  trackIds!: string[];
 }
 
 class AddTrackDto {
@@ -72,5 +102,23 @@ export class PlaylistsController {
     @Param('trackId') trackId: string,
   ) {
     return this.playlists.removeTrack(req.user!.id, id, trackId);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
+  update(@Req() req: AuthedRequest, @Param('id') id: string, @Body() dto: UpdatePlaylistDto) {
+    return this.playlists.update(req.user!.id, id, dto);
+  }
+
+  @Patch(':id/reorder')
+  @UseGuards(AuthGuard('jwt'))
+  reorder(@Req() req: AuthedRequest, @Param('id') id: string, @Body() dto: ReorderTracksDto) {
+    return this.playlists.reorder(req.user!.id, id, dto.trackIds);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
+  remove(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.playlists.remove(req.user!.id, id);
   }
 }

@@ -89,3 +89,19 @@
 **Context:** The web app was originally written with a dark-only baseline — components reach for raw utilities like `text-white`, `bg-white/5`, `bg-black/40`, `border-white/10`, and there are zero `dark:` modifiers anywhere. We want a working light-mode toggle now without blocking on a multi-PR refactor that migrates every component to semantic tokens.
 **Decision:** Use `next-themes` with `attribute="class"` so toggling adds `<html class="light">` (or `dark`). Define a small set of CSS variables on `:root` and `:root.light`, and add a tightly-scoped block of `.light .text-white`, `.light .bg-white\/5`, `.light .bg-black\/30`, … overrides in `apps/web/src/app/globals.css` that flip the dark-baseline utilities to readable values when light is active. Tailwind's existing `darkMode: 'class'` setting means future migrations to semantic tokens (or per-component `dark:` variants) are a no-op upgrade — they win on specificity over the override block.
 **Consequences:** The toggle works today across the entire app surface. Cost: any new component that uses raw `text-white`/`bg-white/X` outside the existing override list will look wrong in light mode and must either reuse an already-overridden utility or be added to the override block. The long-term cleanup (semantic tokens) is on the ROADMAP backlog so the override block can shrink over time.
+
+## ADR-0010 · "Recently played" stays client-side (localStorage) for now
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** The Library page in #6 needs a "Recently played" section. A correct server-side implementation requires (a) a new Prisma model + migration, (b) write-on-play hooks in both player engines hitting an authenticated endpoint, and (c) reconciliation when the same user plays from multiple devices. Doing all of that inline would balloon the Library PR and delay the user-visible win.
+**Decision:** Track the last ~30–50 played `Track` payloads in `localStorage` under `melodix.recentlyPlayed` (per-device, per-app surface). Both player engines call a tiny `pushRecentlyPlayed(track)` helper from inside their `playTrack` callback. The Library section subscribes to a `melodix:recently-played-changed` `CustomEvent` so the list refreshes without a poll. Scoping is per-device on purpose — multi-device sync is the H2 server-side history item (`PlayHistory` model), not this PR.
+**Consequences:** Ships immediately, zero schema changes, works in private/incognito too (just doesn't persist). Cost: history doesn't follow the user across devices, and clearing browser storage wipes it. The H2 server-side `PlayHistory` will deprecate this helper or layer on top of it.
+
+## ADR-0011 · Playlist reordering = up/down arrows, not drag-and-drop
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** Reordering tracks inside a playlist is the most touch-sensitive interaction in the editor. We want it to work identically on web, mobile web, and inside the Telegram WebView. Adding `@dnd-kit/core` + `@dnd-kit/sortable` would solve the desktop case beautifully (~25 KB gzipped) but introduces a touch-DnD library inside Telegram WebView, which has well-known issues with native scroll competition.
+**Decision:** Render a per-row up-arrow / down-arrow control on the web editor and persist on each click via `PATCH /playlists/:id/reorder`. The Mini App keeps the playlist read-only (edit sheet handles metadata only) — adding reorder there is deferred until we have a tested touch-DnD story.
+**Consequences:** Zero new runtime deps; trivially testable; works for keyboard users out of the box. Cost: bulk reordering takes more clicks than a drag would. Migrating to DnD later is a single component swap because the reorder API already takes the full ordered list.
