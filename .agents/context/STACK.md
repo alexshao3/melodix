@@ -44,6 +44,8 @@
 |                                                                       | Version      |
 | --------------------------------------------------------------------- | ------------ |
 | NestJS (`@nestjs/{common,core,platform-express,config,jwt,passport}`) | ^10.x        |
+| `@nestjs/throttler`                                                   | ^6.5.0       |
+| `ioredis`                                                             | ^5.10.1      |
 | Prisma + `@prisma/client`                                             | ^6.1.0       |
 | `passport` / `passport-jwt`                                           | ^0.7 / ^4    |
 | `class-validator` / `class-transformer`                               | ^0.14 / ^0.5 |
@@ -52,26 +54,27 @@
 
 ## Ports
 
-| Service                                  | Port | URL                                                   |
-| ---------------------------------------- | ---- | ----------------------------------------------------- |
-| Web                                      | 3000 | http://localhost:3000                                 |
-| Mini App                                 | 3001 | http://localhost:3001                                 |
-| API                                      | 4000 | http://localhost:4000/api                             |
-| Postgres (docker-compose)                | 5432 | `postgresql://melodix:melodix@localhost:5432/melodix` |
-| Redis (docker-compose, not yet wired in) | 6379 | `redis://localhost:6379`                              |
+| Service                   | Port | URL                                                    |
+| ------------------------- | ---- | ------------------------------------------------------ |
+| Web                       | 3000 | http://localhost:3000                                  |
+| Mini App                  | 3001 | http://localhost:3001                                  |
+| API                       | 4000 | http://localhost:4000/api                              |
+| Postgres (docker-compose) | 5432 | `postgresql://melodix:melodix@localhost:5432/melodix`  |
+| Redis (docker-compose)    | 6379 | `redis://localhost:6379` (Jamendo cache + future jobs) |
 
 ## Environment variables
 
 ### `apps/api/.env`
 
-| Var                  | Required                       | Used by                         | Notes                                                                                       |
-| -------------------- | ------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`       | yes (for auth/playlists/likes) | Prisma                          | docker-compose default: `postgresql://melodix:melodix@localhost:5432/melodix?schema=public` |
-| `JWT_SECRET`         | yes                            | `auth/`                         | Any non-empty string in dev                                                                 |
-| `JAMENDO_CLIENT_ID`  | no                             | `jamendo/`                      | Without it, the API serves `DEMO_TRACKS`                                                    |
-| `TELEGRAM_BOT_TOKEN` | no                             | `auth.service.ts:telegramLogin` | Required to verify Mini App `initData`                                                      |
-| `CORS_ORIGIN`        | no                             | `main.ts`                       | Comma-separated allow-list; defaults to `*`                                                 |
-| `PORT`               | no                             | `main.ts`                       | Defaults to `4000`                                                                          |
+| Var                  | Required                       | Used by                         | Notes                                                                                                |
+| -------------------- | ------------------------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`       | yes (for auth/playlists/likes) | Prisma                          | docker-compose default: `postgresql://melodix:melodix@localhost:5432/melodix?schema=public`          |
+| `JWT_SECRET`         | yes                            | `auth/`                         | Any non-empty string in dev                                                                          |
+| `JAMENDO_CLIENT_ID`  | no                             | `jamendo/`                      | Without it, the API serves `DEMO_TRACKS`                                                             |
+| `REDIS_URL`          | no                             | `cache/`                        | E.g. `redis://localhost:6379`. When unset, the API runs without cache (every request hits upstream). |
+| `TELEGRAM_BOT_TOKEN` | no                             | `auth.service.ts:telegramLogin` | Required to verify Mini App `initData`                                                               |
+| `CORS_ORIGIN`        | no                             | `main.ts`                       | Comma-separated allow-list; defaults to `*`                                                          |
+| `PORT`               | no                             | `main.ts`                       | Defaults to `4000`                                                                                   |
 
 ### `apps/web/.env.local`
 

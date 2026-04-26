@@ -57,9 +57,22 @@ graph at [`apps/api/src/app.module.ts`](../../apps/api/src/app.module.ts).
 | `ArtistsModule`    | `artists/`             | List & fetch artists                                                   | `GET /api/artists`, `GET /api/artists/:id`                                                                                                                                                           |
 | `PlaylistsModule`  | `playlists/`           | Featured + CRUD + add/remove tracks + edit metadata + reorder + delete | `GET /api/playlists/{featured,:id}`, `POST /api/playlists`, `POST/DELETE /api/playlists/:id/tracks/...`, `PATCH /api/playlists/:id`, `PATCH /api/playlists/:id/reorder`, `DELETE /api/playlists/:id` |
 | `SearchModule`     | `search/`              | Unified search across tracks/albums/artists                            | `GET /api/search`                                                                                                                                                                                    |
-| `JamendoModule`    | `jamendo/`             | HTTP client for Jamendo + `DEMO_TRACKS` fallback                       | (internal)                                                                                                                                                                                           |
+| `JamendoModule`    | `jamendo/`             | HTTP client for Jamendo + `DEMO_TRACKS` fallback (cache-wrapped)       | (internal)                                                                                                                                                                                           |
+| `CacheModule`      | `cache/`               | Redis-backed JSON cache (`get` / `set` / `wrap` / `invalidate`)        | (internal); gracefully no-ops when `REDIS_URL` is unset (ADR-0012)                                                                                                                                   |
 | `PrismaModule`     | `prisma/`              | Prisma client singleton                                                | (internal)                                                                                                                                                                                           |
-| `HealthController` | `health.controller.ts` | Liveness probe                                                         | `GET /api/health`                                                                                                                                                                                    |
+| `HealthController` | `health.controller.ts` | Liveness probe (`@SkipThrottle`)                                       | `GET /api/health`                                                                                                                                                                                    |
+
+**Rate limiting.** `ThrottlerModule.forRoot([...])` registers three buckets:
+`short` (60 req / 10 s), `default` (300 req / 60 s), and `auth` (10 req / 60 s,
+opt-in via `@Throttle({ auth: ... })`). Bound globally as `APP_GUARD` in
+[`apps/api/src/app.module.ts`](../../apps/api/src/app.module.ts). See ADR-0013.
+
+**Caching.** `CacheService` ([`apps/api/src/cache/cache.service.ts`](../../apps/api/src/cache/cache.service.ts))
+wraps `ioredis`. `JamendoService` calls `cache.wrap(key, 600, loader)` around
+every idempotent fetch — `trending`, `new-releases`, `genre`, `search-tracks`,
+`search-albums`, `search-artists`, `track`, `album`, `artist`, `album-tracks`,
+`artist-tracks`. Cache keys are namespaced under `jamendo:`. Missing
+`REDIS_URL` degrades to no-cache.
 
 **Persistence.** Prisma schema at [`apps/api/prisma/schema.prisma`](../../apps/api/prisma/schema.prisma).
 Models: `User`, `Artist`, `Album`, `Track`, `Playlist`, `PlaylistTrack`, `Like`.

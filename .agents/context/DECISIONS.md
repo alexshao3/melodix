@@ -105,3 +105,59 @@
 **Context:** Reordering tracks inside a playlist is the most touch-sensitive interaction in the editor. We want it to work identically on web, mobile web, and inside the Telegram WebView. Adding `@dnd-kit/core` + `@dnd-kit/sortable` would solve the desktop case beautifully (~25 KB gzipped) but introduces a touch-DnD library inside Telegram WebView, which has well-known issues with native scroll competition.
 **Decision:** Render a per-row up-arrow / down-arrow control on the web editor and persist on each click via `PATCH /playlists/:id/reorder`. The Mini App keeps the playlist read-only (edit sheet handles metadata only) — adding reorder there is deferred until we have a tested touch-DnD story.
 **Consequences:** Zero new runtime deps; trivially testable; works for keyboard users out of the box. Cost: bulk reordering takes more clicks than a drag would. Migrating to DnD later is a single component swap because the reorder API already takes the full ordered list.
+
+## ADR-0012 · Redis cache with graceful degradation when `REDIS_URL` is unset
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** The Jamendo API is rate-limited and several of our endpoints
+(`/api/tracks/{trending,new-releases,genre/:g}`, `/api/search`,
+`/api/{albums,artists}/:id`) hit it on every cold visit. Redis is already in
+`docker-compose.yml`. We want a real cache for self-hosted deployments
+without breaking the "boots without keys" promise from `AGENTS.md` §3.
+**Decision:** Add a `CacheService` ([`apps/api/src/cache/cache.service.ts`](../../apps/api/src/cache/cache.service.ts))
+backed by `ioredis`. It exposes `get` / `set` / `wrap(key, ttl, loader)` /
+`invalidate(prefix)`. When `REDIS_URL` is unset, or when the client cannot
+connect, every method becomes a safe no-op — `get` returns `null`, `set` is
+swallowed, and `wrap` always invokes the loader. `JamendoService` calls
+`cache.wrap('jamendo:<method>:<args>', 600, loader)` around every idempotent
+upstream call (TTL 10 min). `null` / `undefined` loader results are _not_
+cached so a transient outage doesn't get pinned for 10 minutes.
+**Consequences:** Self-hosted deployments with Redis get a ~10-min hot cache
+with zero per-route boilerplate. Dev environments without Redis still work
+identically — they just hit Jamendo every time. Cost: cache invalidation is
+manual today; we'll add explicit `cache.invalidate('jamendo:')` admin
+plumbing if/when we ship a "force refresh" UI.
+
+## ADR-0013 · Three-bucket rate limiting via `@nestjs/throttler`
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** The public API is unauthenticated for browsing endpoints and
+`/auth/{login,register}` performs bcrypt rounds. A single global limit either
+chokes legitimate browsing (when set low) or leaves auth wide open to
+credential-stuffing (when set high). We want sane defaults that don't need
+per-route babysitting.
+**Decision:** Register three named buckets in `ThrottlerModule.forRoot([...])`
+and bind `ThrottlerGuard` as a global `APP_GUARD`:
+
+- **`short`** — 60 requests / 10 s. Burst protection on every endpoint.
+- **`default`** — 300 requests / 60 s. Sustained baseline that comfortably
+  covers a user opening Library + Discover + Search in quick succession.
+- **`auth`** — declared _permissively_ (300 / 60 s) at the global level so it
+  does not constrain general traffic. `AuthController` opts in via
+  `@Throttle({ auth: { limit: 10, ttl: 60_000 } })` to bring the effective
+  bucket down to 10 / 60 s — capping password attempts at one every six
+  seconds per IP. Why two steps: `@nestjs/throttler` v6 evaluates _every_
+  named bucket on every request, so a globally-tight `auth` bucket would
+  also throttle `/tracks/trending` etc. The decorator scopes the tightening
+  to auth routes.
+
+`/api/health` is decorated with `@SkipThrottle()` so load-balancers and uptime
+checkers never trip the limits.
+**Consequences:** New endpoints inherit `short` + `default` for free.
+Sensitive endpoints opt into `auth` with a one-line decorator. Cost: the
+buckets are IP-only today (NestJS throttler default). If we put the API
+behind a CDN that doesn't forward `X-Forwarded-For`, the entire CDN egress
+will share one bucket — addressable by switching to a custom tracker that
+keys on `req.user?.id ?? req.ip` once we have authenticated traffic.
