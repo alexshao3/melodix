@@ -1,0 +1,51 @@
+name: AI Context Freshness
+
+on:
+  pull_request:
+
+# Soft check: this workflow never fails the build. It posts a warning to the
+# PR's checks tab when source code changed without any update to the
+# .agents/context/ files. The intent is to nudge contributors to follow the
+# auto-update contract documented in AGENTS.md §4.
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare diff against base
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          git fetch origin "${{ github.base_ref }}" --depth=1
+
+          # Files that count as "code or config" — changing any of these
+          # without a context update earns a warning.
+          CODE_PATTERN='^(apps/|packages/|\.github/workflows/|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|turbo\.json|tsconfig\.base\.json|docker-compose\.yml)'
+
+          # Files that satisfy the "context updated" requirement.
+          CONTEXT_PATTERN='^(AGENTS\.md|\.agents/)'
+
+          CHANGED=$(git diff --name-only "$BASE...HEAD")
+          echo "Changed files:"
+          echo "$CHANGED" | sed 's/^/  /'
+
+          CODE_CHANGES=$(echo "$CHANGED" | grep -E "$CODE_PATTERN" || true)
+          CONTEXT_CHANGES=$(echo "$CHANGED" | grep -E "$CONTEXT_PATTERN" || true)
+
+          if [ -n "$CODE_CHANGES" ] && [ -z "$CONTEXT_CHANGES" ]; then
+            echo
+            echo "::warning title=AI context files not updated::This PR changes code but does not update AGENTS.md or any file under .agents/. See AGENTS.md §4 and .agents/skills/update-context/SKILL.md for the auto-update contract."
+            echo
+            echo "Files that triggered the check:"
+            echo "$CODE_CHANGES" | sed 's/^/  /'
+          else
+            echo "Context-freshness check OK."
+          fi
