@@ -76,7 +76,6 @@
 | `TELEGRAM_BOT_TOKEN` | no                             | `auth.service.ts:telegramLogin` | Required to verify Mini App `initData`                                                               |
 | `CORS_ORIGIN`        | no                             | `main.ts`                       | Comma-separated allow-list; defaults to `*`                                                          |
 | `PORT`               | no                             | `main.ts`                       | Defaults to `4000`                                                                                   |
-| `MELODIX_E2E_AUTHED` | no                             | `e2e/authed.spec.ts`            | Set to `1` to opt into the DB-backed Playwright suite locally (CI sets it). See ADR-0018.            |
 
 ### `apps/web/.env.local`
 
@@ -89,6 +88,17 @@
 | Var                   | Notes          |
 | --------------------- | -------------- |
 | `NEXT_PUBLIC_API_URL` | Same as above. |
+
+### Runner / E2E (shell-level only — NOT loaded from any `.env` file)
+
+These are read by `process.env` in the Playwright runner / GitHub Actions
+workflow, not by NestJS's `ConfigModule`. They must be exported in the
+shell (or set in CI workflow `env:`) — putting them in `apps/api/.env`
+has no effect.
+
+| Var                  | Notes                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `MELODIX_E2E_AUTHED` | Set to `1` to opt into the DB-backed Playwright suite (`e2e/authed.spec.ts`). CI sets it. See ADR-0018. |
 
 ## Top-level scripts (`pnpm <script>`)
 
@@ -139,9 +149,8 @@ pnpm --filter @melodix/miniapp dev
 → install chromium (or system deps if cache hit) → `pnpm e2e`. The
 workflow exports `MELODIX_E2E_AUTHED=1` so `e2e/authed.spec.ts` runs;
 locally the same suite is gated off unless you opt in with the same flag
-
-- a running Postgres. Always uploads `playwright-report/` (7-day
-  retention); uploads `test-results/` traces only on failure.
+**plus** a running Postgres. Always uploads `playwright-report/` (7-day
+retention); uploads `test-results/` traces only on failure.
 
 `.github/workflows/context-freshness.yml` runs alongside and warns if a PR
 changes code without updating any `.agents/context/` file.
