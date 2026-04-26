@@ -76,6 +76,7 @@
 | `TELEGRAM_BOT_TOKEN` | no                             | `auth.service.ts:telegramLogin` | Required to verify Mini App `initData`                                                               |
 | `CORS_ORIGIN`        | no                             | `main.ts`                       | Comma-separated allow-list; defaults to `*`                                                          |
 | `PORT`               | no                             | `main.ts`                       | Defaults to `4000`                                                                                   |
+| `MELODIX_E2E_AUTHED` | no                             | `e2e/authed.spec.ts`            | Set to `1` to opt into the DB-backed Playwright suite locally (CI sets it). See ADR-0018.            |
 
 ### `apps/web/.env.local`
 
@@ -130,11 +131,17 @@ pnpm --filter @melodix/miniapp dev
 4. `pnpm lint`
 5. `pnpm build`
 
-`.github/workflows/e2e.yml` runs in parallel with `ci.yml`. Steps: install →
-`prisma:generate` → `pnpm build` → cache `~/.cache/ms-playwright` keyed on
-`pnpm-lock.yaml` → install chromium (or system deps if cache hit) →
-`pnpm e2e`. Always uploads `playwright-report/` (7-day retention); uploads
-`test-results/` traces only on failure.
+`.github/workflows/e2e.yml` runs in parallel with `ci.yml`. It provisions a
+`postgres:16-alpine` service container (port 5432, db/user/pass all
+`melodix`) and runs: install → `prisma:generate` → `prisma db push
+--accept-data-loss` → `prisma:seed` (creates the `demo`/`melodix123` user)
+→ `pnpm build` → cache `~/.cache/ms-playwright` keyed on `pnpm-lock.yaml`
+→ install chromium (or system deps if cache hit) → `pnpm e2e`. The
+workflow exports `MELODIX_E2E_AUTHED=1` so `e2e/authed.spec.ts` runs;
+locally the same suite is gated off unless you opt in with the same flag
+
+- a running Postgres. Always uploads `playwright-report/` (7-day
+  retention); uploads `test-results/` traces only on failure.
 
 `.github/workflows/context-freshness.yml` runs alongside and warns if a PR
 changes code without updating any `.agents/context/` file.

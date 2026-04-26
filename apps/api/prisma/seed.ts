@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -6,7 +7,6 @@ async function main() {
   console.log('Seeding Melodix...');
 
   // Demo user (password: melodix123)
-  const bcrypt = await import('bcryptjs');
   const hash = await bcrypt.hash('melodix123', 10);
   await prisma.user.upsert({
     where: { username: 'demo' },
