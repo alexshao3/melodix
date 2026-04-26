@@ -91,7 +91,24 @@ describe('JamendoService caching', () => {
 
   it('caches getByGenre per (genre, limit) pair', async () => {
     const { jamendo, restoreFetch } = makeServices();
-    const fetchMock = stubFetch([]);
+    // Non-empty payload so cache.wrap actually caches; empty arrays are
+    // intentionally not cached (see cache.service.ts shouldCache()).
+    const fetchMock = stubFetch([
+      {
+        id: 'g',
+        name: 'G',
+        duration: 60,
+        artist_id: 'a',
+        artist_name: 'A',
+        album_id: 'b',
+        album_name: 'B',
+        album_image: 'i.jpg',
+        image: 'i.jpg',
+        audio: 'g.mp3',
+        audiodownload: 'g.mp3',
+        releasedate: '2024-01-01',
+      },
+    ]);
 
     await jamendo.getByGenre('rock', 5);
     await jamendo.getByGenre('rock', 5);
@@ -99,6 +116,15 @@ describe('JamendoService caching', () => {
     await jamendo.getByGenre('rock', 10); // different limit → separate key
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
+    restoreFetch();
+  });
+
+  it('does not cache empty results from a flapping upstream', async () => {
+    const { jamendo, restoreFetch } = makeServices();
+    const fetchMock = stubFetch([]); // simulates Jamendo timeout / 5xx
+    await jamendo.searchTracks('nothing-here', 5);
+    await jamendo.searchTracks('nothing-here', 5);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     restoreFetch();
   });
 

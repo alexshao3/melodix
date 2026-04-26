@@ -80,6 +80,31 @@ describe('CacheService', () => {
     expect(calls).toBe(2); // re-invoked because nulls aren't cached
   });
 
+  it("wrap() does not cache empty arrays (so a transient upstream outage isn't pinned for the full TTL)", async () => {
+    const svc = makeService({ withRedis: true });
+    let calls = 0;
+    const loader = async () => {
+      calls += 1;
+      return [] as string[];
+    };
+    await svc.wrap('k:empty', 60, loader);
+    await svc.wrap('k:empty', 60, loader);
+    expect(calls).toBe(2);
+  });
+
+  it('wrap() still caches non-empty arrays', async () => {
+    const svc = makeService({ withRedis: true });
+    let calls = 0;
+    const loader = async () => {
+      calls += 1;
+      return ['hit'];
+    };
+    await svc.wrap('k:nonempty', 60, loader);
+    const second = await svc.wrap('k:nonempty', 60, loader);
+    expect(second).toEqual(['hit']);
+    expect(calls).toBe(1);
+  });
+
   it('wrap() always invokes loader when Redis is unavailable', async () => {
     const svc = makeService({ withRedis: false });
     let calls = 0;

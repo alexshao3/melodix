@@ -86,15 +86,28 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
    * return it. If Redis is down or the loader throws, we still return the
    * loader's result (or rethrow) so callers behave identically with or
    * without cache.
+   *
+   * Empty results are not cached. `JamendoService.fetch()` returns `[]` on
+   * timeouts and non-200 responses (it's defensive on purpose); caching
+   * those would pin a transient outage for the full TTL, which is exactly
+   * the failure mode ADR-0012 calls out. Skipping `null`, `undefined`, and
+   * empty arrays means a flap re-tries on the very next request instead of
+   * waiting 10 minutes.
    */
   async wrap<T>(key: string, ttlSeconds: number, loader: () => Promise<T>): Promise<T> {
     const cached = await this.get<T>(key);
     if (cached !== null) return cached;
     const fresh = await loader();
-    if (fresh !== null && fresh !== undefined) {
+    if (this.shouldCache(fresh)) {
       await this.set(key, fresh, ttlSeconds);
     }
     return fresh;
+  }
+
+  private shouldCache(value: unknown): boolean {
+    if (value === null || value === undefined) return false;
+    if (Array.isArray(value) && value.length === 0) return false;
+    return true;
   }
 
   async invalidate(prefix: string): Promise<void> {

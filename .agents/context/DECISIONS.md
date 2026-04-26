@@ -144,8 +144,14 @@ and bind `ThrottlerGuard` as a global `APP_GUARD`:
 - **`short`** — 60 requests / 10 s. Burst protection on every endpoint.
 - **`default`** — 300 requests / 60 s. Sustained baseline that comfortably
   covers a user opening Library + Discover + Search in quick succession.
-- **`auth`** — 10 requests / 60 s. Opt-in via `@Throttle({ auth: ... })` on
-  `AuthController`. Caps password attempts at one every six seconds per IP.
+- **`auth`** — declared _permissively_ (300 / 60 s) at the global level so it
+  does not constrain general traffic. `AuthController` opts in via
+  `@Throttle({ auth: { limit: 10, ttl: 60_000 } })` to bring the effective
+  bucket down to 10 / 60 s — capping password attempts at one every six
+  seconds per IP. Why two steps: `@nestjs/throttler` v6 evaluates _every_
+  named bucket on every request, so a globally-tight `auth` bucket would
+  also throttle `/tracks/trending` etc. The decorator scopes the tightening
+  to auth routes.
 
 `/api/health` is decorated with `@SkipThrottle()` so load-balancers and uptime
 checkers never trip the limits.

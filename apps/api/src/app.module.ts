@@ -18,15 +18,20 @@ import { HealthController } from './health.controller';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     /**
-     * Global throttler — see ADR-0013. Two named buckets:
+     * Global throttler — see ADR-0013. Three named buckets:
      *   - `short`: 60 requests / 10 s — burst protection.
      *   - `default`: 300 requests / 60 s — sustained baseline for browsing UIs.
-     * Sensitive routes opt into a stricter `auth` bucket via @Throttle().
+     *   - `auth`: defined permissively here so it does NOT constrain general
+     *     traffic; sensitive routes (`AuthController`) override it via
+     *     `@Throttle({ auth: { limit: 10, ttl: 60_000 } })` to bring the
+     *     effective limit down to 10 / 60 s. `@nestjs/throttler` evaluates
+     *     every named bucket on every request, so the global limit must
+     *     stay generous and the decorator does the tightening.
      */
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 10_000, limit: 60 },
       { name: 'default', ttl: 60_000, limit: 300 },
-      { name: 'auth', ttl: 60_000, limit: 10 },
+      { name: 'auth', ttl: 60_000, limit: 300 },
     ]),
     PrismaModule,
     CacheModule,
