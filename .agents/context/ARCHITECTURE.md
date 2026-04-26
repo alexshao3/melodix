@@ -40,8 +40,7 @@ packages/
   ui/           Reusable React components (cards, buttons, motion primitives)
 e2e/                  Playwright specs (smoke + authed); ADR-0015 + ADR-0018
 playwright.config.ts  Boots production builds of api+web via webServer
-docker-compose.yml         Postgres + Redis for local dev
-docker-compose.prod.yml    Production self-host: all apps + Cloudflare Tunnel
+docker-compose.yml         Production self-host: all apps + Cloudflare Tunnel (local Postgres/Redis commented out)
 .dockerignore              Docker build exclusions
 .env.production.example    Template for production env vars
 apps/api/Dockerfile        Multi-stage NestJS + Prisma production image
