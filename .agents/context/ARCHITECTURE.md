@@ -40,9 +40,15 @@ packages/
   ui/           Reusable React components (cards, buttons, motion primitives)
 e2e/                  Playwright specs (smoke + authed); ADR-0015 + ADR-0018
 playwright.config.ts  Boots production builds of api+web via webServer
-docker-compose.yml    Postgres + Redis for local dev
-turbo.json            Turborepo task graph
-pnpm-workspace.yaml   Workspace globs
+docker-compose.yml         Postgres + Redis for local dev
+docker-compose.prod.yml    Production self-host: all apps + Cloudflare Tunnel
+.dockerignore              Docker build exclusions
+.env.production.example    Template for production env vars
+apps/api/Dockerfile        Multi-stage NestJS + Prisma production image
+apps/web/Dockerfile        Multi-stage Next.js standalone production image
+apps/miniapp/Dockerfile    Multi-stage Next.js standalone production image
+turbo.json                 Turborepo task graph
+pnpm-workspace.yaml        Workspace globs
 ```
 
 ## `apps/api` — NestJS backend (port 4000, prefix `/api`)

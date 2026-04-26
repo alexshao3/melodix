@@ -96,8 +96,8 @@ workflow, not by NestJS's `ConfigModule`. They must be exported in the
 shell (or set in CI workflow `env:`) — putting them in `apps/api/.env`
 has no effect.
 
-| Var                  | Notes                                                                                       |
-| -------------------- | ------------------------------------------------------------------------------------------- |
+| Var                  | Notes                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
 | `MELODIX_E2E_AUTHED` | Set to `1` to opt into the DB-backed Playwright suite (`e2e/authed.spec.ts`). CI sets it. See ADR-0018. |
 
 ## Top-level scripts (`pnpm <script>`)
@@ -154,6 +154,30 @@ retention); uploads `test-results/` traces only on failure.
 
 `.github/workflows/context-freshness.yml` runs alongside and warns if a PR
 changes code without updating any `.agents/context/` file.
+
+## Docker (self-host production)
+
+Per-app Dockerfiles produce optimised production images:
+
+| Dockerfile                | Base           | Notes                                                                                 |
+| ------------------------- | -------------- | ------------------------------------------------------------------------------------- |
+| `apps/api/Dockerfile`     | node:22-alpine | Multi-stage. Runs `prisma migrate deploy` on startup, then `node dist/…/main.js`.     |
+| `apps/web/Dockerfile`     | node:22-alpine | Multi-stage. Next.js `output: 'standalone'`. `NEXT_PUBLIC_API_URL` set via build arg. |
+| `apps/miniapp/Dockerfile` | node:22-alpine | Same pattern as web.                                                                  |
+
+`docker-compose.prod.yml` orchestrates all services + a Cloudflare Tunnel sidecar:
+
+```bash
+# Quick start
+cp .env.production.example .env.production   # edit values
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+Services: `postgres`, `redis`, `api`, `web`, `miniapp`, `cloudflared`.
+
+Database and Redis can be swapped for cloud providers (Supabase, Neon, Upstash, etc.)
+by changing `DATABASE_URL` / `REDIS_URL` in `.env.production` and removing the
+corresponding container from the compose file.
 
 ## Pre-commit (local)
 
