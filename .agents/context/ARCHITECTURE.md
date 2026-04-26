@@ -38,6 +38,8 @@ apps/
 packages/
   shared/       TypeScript domain types + API_ROUTES + helpers
   ui/           Reusable React components (cards, buttons, motion primitives)
+e2e/                  Playwright smoke specs (run `pnpm e2e`); ADR-0015
+playwright.config.ts  Boots production builds of api+web via webServer
 docker-compose.yml    Postgres + Redis for local dev
 turbo.json            Turborepo task graph
 pnpm-workspace.yaml   Workspace globs
@@ -183,7 +185,19 @@ live next to the API surface. Today's suites:
 
 - `auth/auth.service.spec.ts` — password register/login, Telegram
   `initData` verification (real HMAC-SHA256), `telegramLogin` upsert.
+- `playlists/playlists.service.spec.ts` — CRUD, ordering, ownership.
+- `cache/cache.service.spec.ts` — `wrap()` semantics, no-op fallback.
+- `jamendo/jamendo.service.spec.ts` — DEMO_TRACKS fallback, cache integration.
+- `history/history.service.spec.ts` — record / dedup / 200-row cap / list / clear.
 - `__shared-tests__/format.spec.ts` — `formatDuration`, `formatNumber`.
+
+End-to-end smoke lives at the repo root in [`e2e/`](../../e2e/), driven by
+[`playwright.config.ts`](../../playwright.config.ts). Run with `pnpm e2e`.
+Both servers are spawned by Playwright's `webServer` array — `pnpm --filter
+@melodix/api start` (no `JAMENDO_CLIENT_ID`, no `DATABASE_URL`) and
+`pnpm --filter @melodix/web start` against `NEXT_PUBLIC_API_URL=
+http://localhost:4000`. CI runs the suite via
+[`.github/workflows/e2e.yml`](../../.github/workflows/e2e.yml). See ADR-0015.
 
 ## Theming
 
