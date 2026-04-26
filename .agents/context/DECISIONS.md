@@ -65,3 +65,19 @@
 **Context:** AI agents (Devin, Claude Code, Cursor, …) currently spend significant tokens re-discovering what the repo does, what's built, and what's planned. Knowledge silently rots if it lives only in commit history or scattered docs.
 **Decision:** Adopt a small, stable set of files (`AGENTS.md` + `.agents/context/{PROJECT,ARCHITECTURE,FEATURES,ROADMAP,PROGRESS,STACK,GLOSSARY,DECISIONS}.md`) with explicit update rules enforced by the PR template, a `.agents/skills/update-context/SKILL.md` checklist, and a `context-freshness` CI warning. Token-efficiency goals: front-loaded TL;DRs, tables over prose, hierarchical reading guide.
 **Consequences:** Any AI agent can reach productive work after reading 1–3 small files. Cost: every code-changing PR carries a small documentation tax; without discipline, the files rot — the CI workflow plus the SKILL checklist are the safety nets.
+
+## ADR-0007 · Cross-package tests live under `apps/api/`
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** We want a first Jest suite without standing up a separate Jest config in every workspace package. `apps/api` already has Jest + ts-jest installed.
+**Decision:** Add a `moduleNameMapper` in `apps/api/jest.config.ts` that resolves `@melodix/shared` to `packages/shared/src`, and put cross-package tests (e.g. for `formatDuration` / `formatNumber`) under `apps/api/src/__shared-tests__/`. Long-term we may give each package its own Jest config; for now this trades a tiny bit of locality for not having to install Jest in every package.
+**Consequences:** All tests run in one place via `pnpm --filter @melodix/api test`. Cost: tests for `packages/shared` live one directory away from the source they exercise; we mitigate this by naming the directory `__shared-tests__` so it's obvious.
+
+## ADR-0008 · Reduced motion = global CSS rule + framer-motion `MotionConfig`
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** Both apps use a mix of CSS keyframe animations (marquee, aurora gradients, audio wave) and JS-driven framer-motion `motion.*` components. Honouring `prefers-reduced-motion` per-component would be invasive and easy to forget.
+**Decision:** Add one global media query in each app's `globals.css` that collapses `animation-duration`, `animation-iteration-count`, and `transition-duration` to `0.01ms` whenever the user has `prefers-reduced-motion: reduce`. Wrap each app in a `MotionRoot` (`<MotionConfig reducedMotion="user">`) so framer-motion's JS-driven animations follow the same preference automatically.
+**Consequences:** New components inherit the preference for free — no per-component opt-in needed. Cost: very-rare exceptions (e.g. essential progress indicators that **must** keep moving) need a `motion-safe:` Tailwind variant or scoped CSS to override the global rule.

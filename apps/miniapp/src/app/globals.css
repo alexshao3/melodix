@@ -25,16 +25,36 @@ body {
 }
 
 body {
-  background-image:
-    radial-gradient(700px 500px at 80% -10%, rgba(217, 70, 239, 0.15), transparent 60%),
+  background-image: radial-gradient(
+      700px 500px at 80% -10%,
+      rgba(217, 70, 239, 0.15),
+      transparent 60%
+    ),
     radial-gradient(500px 400px at -10% 10%, rgba(34, 211, 238, 0.15), transparent 60%);
   background-attachment: fixed;
   min-height: 100dvh;
 }
 
 @keyframes audiowave {
-  0%, 100% { transform: scaleY(0.4); }
-  50% { transform: scaleY(1); }
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Honour prefers-reduced-motion for all CSS-driven animations & transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .text-gradient {
@@ -44,5 +64,9 @@ body {
   color: transparent;
 }
 
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}

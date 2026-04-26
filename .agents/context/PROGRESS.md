@@ -12,7 +12,8 @@
 
 ### April
 
-- 2026-04-26 · _(this PR)_ · Added the AI-context system: `AGENTS.md` entry point, `.agents/context/` files (PROJECT, ARCHITECTURE, FEATURES, ROADMAP, PROGRESS, STACK, GLOSSARY, DECISIONS), `.agents/skills/update-context/SKILL.md` to enforce updates, freshness CI workflow, and PR-template checklist. Also seeded `ROADMAP.md` with proposed H1/H2/H3 features.
+- 2026-04-26 · _(this PR)_ · H1 bundle: album & artist detail pages (web + Mini App), shared `Skeleton`/`TrackSkeletonRow`/`CardSkeletonGrid`/`HeaderSkeleton` + per-route `loading.tsx`, `prefers-reduced-motion` audit (global CSS rule + framer-motion `MotionConfig`), husky 9 + lint-staged pre-commit hook, first Jest tests for `AuthService` and shared formatters. FEATURES/ROADMAP/STACK/ARCHITECTURE/DECISIONS all updated.
+- 2026-04-26 · #3 · Added the AI-context system: `AGENTS.md` entry point, `.agents/context/` files (PROJECT, ARCHITECTURE, FEATURES, ROADMAP, PROGRESS, STACK, GLOSSARY, DECISIONS), `.agents/skills/update-context/SKILL.md` to enforce updates, freshness CI workflow, and PR-template checklist. Also seeded `ROADMAP.md` with proposed H1/H2/H3 features.
 - 2026-04-26 · #1 · Initial scaffold for the Melodix monorepo (apps: api/web/miniapp; packages: shared/ui; CI; demo data; player engines).
 
 ---
