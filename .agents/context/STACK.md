@@ -89,6 +89,17 @@
 | --------------------- | -------------- |
 | `NEXT_PUBLIC_API_URL` | Same as above. |
 
+### Runner / E2E (shell-level only — NOT loaded from any `.env` file)
+
+These are read by `process.env` in the Playwright runner / GitHub Actions
+workflow, not by NestJS's `ConfigModule`. They must be exported in the
+shell (or set in CI workflow `env:`) — putting them in `apps/api/.env`
+has no effect.
+
+| Var                  | Notes                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `MELODIX_E2E_AUTHED` | Set to `1` to opt into the DB-backed Playwright suite (`e2e/authed.spec.ts`). CI sets it. See ADR-0018. |
+
 ## Top-level scripts (`pnpm <script>`)
 
 |                     | What it does                                                       |
@@ -130,11 +141,16 @@ pnpm --filter @melodix/miniapp dev
 4. `pnpm lint`
 5. `pnpm build`
 
-`.github/workflows/e2e.yml` runs in parallel with `ci.yml`. Steps: install →
-`prisma:generate` → `pnpm build` → cache `~/.cache/ms-playwright` keyed on
-`pnpm-lock.yaml` → install chromium (or system deps if cache hit) →
-`pnpm e2e`. Always uploads `playwright-report/` (7-day retention); uploads
-`test-results/` traces only on failure.
+`.github/workflows/e2e.yml` runs in parallel with `ci.yml`. It provisions a
+`postgres:16-alpine` service container (port 5432, db/user/pass all
+`melodix`) and runs: install → `prisma:generate` → `prisma db push
+--accept-data-loss` → `prisma:seed` (creates the `demo`/`melodix123` user)
+→ `pnpm build` → cache `~/.cache/ms-playwright` keyed on `pnpm-lock.yaml`
+→ install chromium (or system deps if cache hit) → `pnpm e2e`. The
+workflow exports `MELODIX_E2E_AUTHED=1` so `e2e/authed.spec.ts` runs;
+locally the same suite is gated off unless you opt in with the same flag
+**plus** a running Postgres. Always uploads `playwright-report/` (7-day
+retention); uploads `test-results/` traces only on failure.
 
 `.github/workflows/context-freshness.yml` runs alongside and warns if a PR
 changes code without updating any `.agents/context/` file.

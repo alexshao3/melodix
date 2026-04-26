@@ -8,13 +8,33 @@ on:
 jobs:
   playwright:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: melodix
+          POSTGRES_PASSWORD: melodix
+          POSTGRES_DB: melodix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
-      # No DATABASE_URL → PrismaService logs a warning and the public read
-      # endpoints work via DEMO_TRACKS. No JAMENDO_CLIENT_ID → JamendoService
-      # falls back to the bundled demo seed. CI stays hermetic. See ADR-0015.
+      # Smoke specs use DEMO_TRACKS (no JAMENDO_CLIENT_ID), authed specs talk
+      # to a real Postgres provisioned above. The DB-backed specs are gated
+      # by MELODIX_E2E_AUTHED so the same Playwright config still works
+      # locally without Docker. See ADR-0018.
       JWT_SECRET: e2e-secret
       NEXT_PUBLIC_API_URL: http://localhost:4000
+      DATABASE_URL: postgresql://melodix:melodix@localhost:5432/melodix?schema=public
+      MELODIX_E2E_AUTHED: '1'
+
     steps:
       - uses: actions/checkout@v4
 
@@ -32,6 +52,12 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm --filter @melodix/api prisma:generate
+
+      - name: Apply Prisma schema (db push, no migration history needed for E2E)
+        run: pnpm --filter @melodix/api exec prisma db push --skip-generate --accept-data-loss
+
+      - name: Seed E2E user
+        run: pnpm --filter @melodix/api prisma:seed
 
       - name: Build
         run: pnpm build
@@ -53,7 +79,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
-      - name: Run Playwright smoke tests
+      - name: Run Playwright tests (smoke + authed)
         run: pnpm e2e
 
       - name: Upload Playwright report

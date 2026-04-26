@@ -364,3 +364,58 @@ current track.
   user-supplied lyric metadata that takes precedence over the upstream.
   At that point this ADR remains correct: lyrics.ovh stays as the
   fallback, and the cache key gains a source-prefix.
+
+## ADR-0018 — Authed Playwright E2E: provision Postgres in CI, gate locally
+
+**Date:** 2026-04-26 · **Status:** Accepted · \*\*Supersedes part of ADR-0015
+
+ADR-0015 established a hermetic E2E suite that booted the API without
+`DATABASE_URL` so the runner needed no Postgres. That covered guest
+flows (home, search, library CTA) but explicitly deferred login / likes
+/ server-history coverage. We need that coverage now to catch
+regressions on the auth-gated surfaces before they hit production.
+
+**Decision.**
+
+CI now stands up a dedicated `postgres:16-alpine` service container
+inside `.github/workflows/e2e.yml` and feeds the API a real
+`DATABASE_URL`. Schema is materialised with `prisma db push
+--accept-data-loss --skip-generate` (we don't ship migration history;
+the schema is the source of truth) and the existing `prisma:seed` script
+provisions the test fixture user (`demo` / `melodix123`).
+
+`playwright.config.ts` forwards `DATABASE_URL` and `JWT_SECRET` to the
+API webServer **only when the runner exports them**. Locally those vars
+are usually unset, so the smoke specs continue to run hermetically with
+zero developer setup.
+
+The new authed specs in [`e2e/authed.spec.ts`](../../e2e/authed.spec.ts)
+gate themselves on `MELODIX_E2E_AUTHED=1`, which CI sets unconditionally
+and developers opt into when they have docker-compose Postgres up.
+That keeps `pnpm e2e` green on a fresh laptop.
+
+**Schema clean-up shipped alongside.** While wiring this up we found a
+latent 500 on `POST /api/me/likes/:trackId`: `Like.trackId` was a FK to
+`Track.id`, but tracks aren't persisted (Jamendo + DEMO_TRACKS are
+ephemeral), so liking anything from /trending blew up. Dropped the FK
+and made `Like.trackId` a free string, mirroring `PlayHistory` (ADR-0014)
+and `Follow` (ADR-0016). No data migration needed since the table
+shipped empty in #6 and never gained production rows.
+
+**Consequences:**
+
+- **Pros.** Real coverage of login → /library, like → "Liked songs",
+  recordPlay → "Recently played" — all three were untested before. The
+  Postgres service container adds ~10 s of CI wall-time but exercises
+  the same Prisma + bcrypt code path users hit. No new mock layers.
+- **Cons.** The E2E job is no longer fully hermetic — a flake in the
+  Postgres image rollout would block CI. Mitigated by pinning to
+  `postgres:16-alpine` and using GH Actions' built-in healthcheck retry.
+- **Why not Testcontainers / a fresh DB per test?** Overkill for a
+  3-spec authed surface; the seed user is the only persistent state and
+  cross-spec isolation comes from `userId`-scoped queries. Revisit if
+  the authed suite grows past ~20 specs or starts mutating shared rows.
+- **Why not a separate GH Actions matrix entry instead of one job?**
+  The smoke specs share the same playwright install + browser cache,
+  and splitting them would double the cache miss surface. Single job,
+  single browser install, two spec files.

@@ -114,7 +114,6 @@ model Track {
 
   artist          Artist           @relation(fields: [artistId], references: [id], onDelete: Cascade)
   album           Album?           @relation(fields: [albumId], references: [id], onDelete: SetNull)
-  likes           Like[]
   playlistTracks  PlaylistTrack[]
 
   @@index([title])
@@ -156,14 +155,19 @@ model PlaylistTrack {
   @@map("playlist_tracks")
 }
 
+/**
+ * Track like log. `trackId` is a free string (`jm_<jamendoId>` in practice)
+ * rather than a FK on Track — Tracks are persisted lazily and the like
+ * surface must work for any Jamendo / demo id without round-tripping the
+ * track first. Mirrors `PlayHistory` (ADR-0014) and `Follow` (ADR-0016).
+ */
 model Like {
   id        String   @id @default(cuid())
   userId    String
   trackId   String
   createdAt DateTime @default(now())
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, trackId])
   @@index([userId])

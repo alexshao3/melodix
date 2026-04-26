@@ -33,7 +33,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - [ ] **Telegram bot deep-links** — share playlist as `t.me/<bot>?startapp=playlist_<id>`.
 - [x] **Lyrics view** — `GET /api/lyrics?artist&title` proxies `lyrics.ovh`; Redis-cached 24h hit / 1h miss; web drawer + Mini App bottom sheet from the player. (Shipped in #11, ADR-0017)
 - [ ] **Storybook** for `packages/ui` so motion components can be reviewed in isolation.
-- [x] **Playwright E2E (smoke)** — `playwright.config.ts` + `e2e/smoke.spec.ts` cover home → click track → mini player, search route, library guest sign-in CTA. New `.github/workflows/e2e.yml` runs headless chromium against the production builds with `DEMO_TRACKS` fixtures (no Postgres, no Jamendo key). _(shipped in #9; ADR-0015)_. Authenticated flows (login, likes, server history) deferred until CI adds a Postgres service.
+- [x] **Playwright E2E (smoke + authed)** — smoke harness shipped in #9 (home → click track → mini player, search route, library guest sign-in CTA, `DEMO_TRACKS` fixtures, no Postgres needed). Authed harness shipped in _(this PR)_ (#13): CI now stands up a Postgres service, `prisma db push` + `prisma:seed` provision a `demo`/`melodix123` user, and `e2e/authed.spec.ts` exercises login → /library, like → "Liked songs" section, recordPlay → "Recently played" section. Locally gated by `MELODIX_E2E_AUTHED=1`. ADR-0015 + ADR-0018.
 
 ## H3 — Long-term / ambitious
 

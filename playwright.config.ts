@@ -40,10 +40,16 @@ export default defineConfig({
       env: {
         NODE_ENV: 'production',
         PORT: '4000',
-        // No JAMENDO_CLIENT_ID → DEMO_TRACKS fallback, no DATABASE_URL → Prisma
-        // logs a warning and the public read endpoints still work.
+        // No JAMENDO_CLIENT_ID → DEMO_TRACKS fallback. DATABASE_URL is
+        // forwarded when set so the authed spec suite (gated by
+        // MELODIX_E2E_AUTHED) can hit a real Postgres; smoke specs ignore
+        // it because every authed endpoint is auth-gated. JWT_SECRET is
+        // also forwarded so the API can issue tokens during the authed
+        // login flow. See ADR-0018.
         JAMENDO_CLIENT_ID: '',
         CORS_ORIGIN: 'http://localhost:3000',
+        ...(process.env.DATABASE_URL ? { DATABASE_URL: process.env.DATABASE_URL } : {}),
+        ...(process.env.JWT_SECRET ? { JWT_SECRET: process.env.JWT_SECRET } : {}),
       },
     },
     {
