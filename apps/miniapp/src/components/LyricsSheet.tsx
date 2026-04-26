@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { api } from '../lib/api';
@@ -53,7 +54,13 @@ export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) 
     };
   }, [open, artist, title]);
 
-  return (
+  // Render through a portal to `document.body` because `MiniPlayer` is a
+  // `motion.div` with both `transform` and `overflow-hidden` — either
+  // would clip / displace `position: fixed` descendants. SSR-safe via
+  // the `typeof window` guard so the Mini App's WebView render is happy.
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -119,6 +126,7 @@ export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) 
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

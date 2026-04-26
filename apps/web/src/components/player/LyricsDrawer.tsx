@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Mic2, X } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -54,7 +55,13 @@ export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps
     };
   }, [open, artist, title]);
 
-  return (
+  // Render via a portal to `document.body` because the player bar is a
+  // `motion.div` with a CSS transform — any `position: fixed` descendant
+  // would otherwise be positioned relative to the player bar instead of
+  // the viewport. SSR-safe via the `typeof window` guard.
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -114,7 +121,8 @@ export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
