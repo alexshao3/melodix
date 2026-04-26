@@ -1,21 +1,21 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: melodix-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: melodix
-      POSTGRES_PASSWORD: melodix
-      POSTGRES_DB: melodix
-    ports:
-      - '5432:5432'
-    volumes:
-      - melodix_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U melodix -d melodix']
-      interval: 5s
-      timeout: 5s
-      retries: 5
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: melodix-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: melodix
+  #     POSTGRES_PASSWORD: melodix
+  #     POSTGRES_DB: melodix
+  #   ports:
+  #     - '5432:5432'
+  #   volumes:
+  #     - melodix_postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -U melodix -d melodix']
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
 
   redis:
     image: redis:7-alpine
@@ -27,5 +27,5 @@ services:
       - melodix_redis_data:/data
 
 volumes:
-  melodix_postgres_data:
+  # melodix_postgres_data:
   melodix_redis_data:
