@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Artist } from '@melodix/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { JamendoService } from '../jamendo/jamendo.service';
+import { DEMO_ARTISTS } from '../jamendo/demo-data';
 
 /**
  * Server-side "Followed artists". Mirrors the shape of `UsersService` likes:
@@ -24,7 +25,15 @@ export class FollowsService {
     });
     const artists: Artist[] = [];
     for (const row of rows) {
-      const artist = await this.jamendo.getArtistById(row.artistId.replace(/^jm_/, ''));
+      const externalId = row.artistId.replace(/^jm_/, '');
+      let artist = await this.jamendo.getArtistById(externalId);
+      // Demo-mode fallback: when JAMENDO_CLIENT_ID is unset the Jamendo
+      // client returns null for everything. Mirror ArtistsService.byId()
+      // and resolve against DEMO_ARTISTS so the Library "Following"
+      // section keeps working without external network access.
+      if (!artist) {
+        artist = DEMO_ARTISTS.find((a) => a.id === row.artistId) ?? null;
+      }
       if (artist) artists.push(artist);
     }
     return artists;

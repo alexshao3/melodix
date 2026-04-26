@@ -2,6 +2,7 @@ import { FollowsService } from './follows.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { JamendoService } from '../jamendo/jamendo.service';
 import type { Artist } from '@melodix/shared';
+import { DEMO_ARTISTS } from '../jamendo/demo-data';
 
 type Row = { userId: string; artistId: string; createdAt: Date };
 
@@ -154,6 +155,20 @@ describe('FollowsService.list / .ids / .isFollowing', () => {
     await service.follow('u1', 'jm_b');
     const ids = await service.ids('u1');
     expect(new Set(ids)).toEqual(new Set(['jm_a', 'jm_b']));
+  });
+
+  it('list() falls back to DEMO_ARTISTS in demo mode (no JAMENDO_CLIENT_ID)', async () => {
+    const prisma = buildPrismaStub();
+    const jamendo = {
+      // Demo mode: getArtistById returns null for everything.
+      getArtistById: jest.fn(async () => null),
+    } as unknown as JamendoService;
+    const service = new FollowsService(prisma as unknown as PrismaService, jamendo);
+    const demoArtist = DEMO_ARTISTS[0]!;
+    await service.follow('u1', demoArtist.id);
+    const out = await service.list('u1');
+    expect(out).toHaveLength(1);
+    expect(out[0]!.id).toBe(demoArtist.id);
   });
 
   it('isFollowing() reflects current state and is per-user', async () => {
