@@ -95,6 +95,17 @@ export const api = {
   me: () =>
     request<{ id: string; username: string; displayName?: string; avatar?: string }>(`/api/me`),
   likes: () => request<Track[]>(`/api/me/likes`),
+  history: (limit = 50) => safe<Track[]>(`/api/me/history?limit=${limit}`, []),
+  recordPlay: (trackId: string) =>
+    safe<{ ok: true }>(
+      `/api/me/history`,
+      { ok: true },
+      {
+        method: 'POST',
+        body: JSON.stringify({ trackId }),
+      },
+    ),
+  clearHistory: () => request<{ ok: true }>(`/api/me/history`, { method: 'DELETE' }),
   like: (trackId: string) =>
     request<{ liked: boolean }>(`/api/me/likes/${encodeURIComponent(trackId)}`, { method: 'POST' }),
   unlike: (trackId: string) =>

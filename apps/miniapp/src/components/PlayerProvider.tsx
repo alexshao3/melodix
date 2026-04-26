@@ -12,6 +12,7 @@ import {
 import type { Track } from '@melodix/shared';
 import { tgHaptic } from '@/lib/telegram';
 import { pushRecentlyPlayed } from '@/lib/recently-played';
+import { api } from '@/lib/api';
 
 interface PlayerContextValue {
   currentTrack: Track | null;
@@ -76,6 +77,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setCurrentTrack(t);
     setPosition(0);
     pushRecentlyPlayed(t);
+    // Best-effort server-side history mirror; `recordPlay` no-ops for guests.
+    void api.recordPlay(t.id);
     a.play().catch(() => undefined);
   }, []);
 

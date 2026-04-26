@@ -104,4 +104,24 @@ export const api = {
   deletePlaylist: (id: string) =>
     authed<{ ok: true }>(`/api/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   me: () => authed<{ id: string; username: string }>(`/api/me`),
+  history: (limit = 30) => safe<Track[]>(`/api/me/history?limit=${limit}`, []),
+  recordPlay: async (trackId: string) => {
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    });
+    const t = token();
+    if (!t) return;
+    headers.set('Authorization', `Bearer ${t}`);
+    try {
+      await fetch(`${BASE_URL}/api/me/history`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ trackId }),
+        cache: 'no-store',
+      });
+    } catch {
+      // best-effort write; the localStorage fallback covers offline cases
+    }
+  },
 };

@@ -25,7 +25,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 
 ## H2 — Mid-term (next ~1–2 months)
 
-- [ ] **Recently played history (server-side)** — new Prisma model `PlayHistory`, endpoint `GET /api/me/history`, write on each successful `play()`. Currently per-device only (`apps/{web,miniapp}/src/lib/recently-played.ts`).
+- [x] **Recently played history (server-side)** — `PlayHistory` Prisma model + `GET/POST/DELETE /api/me/history`; both player engines mirror plays to the server when authed; Library pages prefer server history when authed and fall back to localStorage for guests. Cap 200 rows/user, 30s same-track dedup. _(shipped in #8; ADR-0014)_
 - [ ] **Follow artists** — Prisma model `Follow`, endpoints, UI on artist pages.
 - [x] **Redis-backed cache** for Jamendo responses (TTL 10 min) — shipped in #7. `apps/api/src/cache/` + `cache.wrap()` around every idempotent Jamendo call. Gracefully no-ops when `REDIS_URL` is unset.
 - [x] **Rate limiting** on the public API (`@nestjs/throttler`) — shipped in #7. Three buckets: `short` (60/10s burst), `default` (300/60s sustained), `auth` (10/60s for `/auth/*`). `/api/health` is `@SkipThrottle`. ADR-0013.
