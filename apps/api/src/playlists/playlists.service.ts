@@ -106,9 +106,15 @@ export class PlaylistsService {
     };
   }
 
+  /**
+   * Returns playlists *owned* by the calling user. Used by `GET /api/playlists`
+   * to back the Library page's "Your playlists" section. We intentionally do
+   * not include other users' public playlists here — those are reachable via
+   * featured listings / search instead. (Devin Review #6 BUG-0001.)
+   */
   async list(userId: string): Promise<Playlist[]> {
     const playlists = await this.prisma.playlist.findMany({
-      where: { OR: [{ ownerId: userId }, { isPublic: true }] },
+      where: { ownerId: userId },
       include: { _count: { select: { tracks: true } } },
       orderBy: { updatedAt: 'desc' },
     });

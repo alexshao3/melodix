@@ -76,6 +76,28 @@ function buildPrismaStub() {
           return merged;
         },
       ),
+      findMany: jest.fn(
+        async (args: {
+          where: { ownerId?: string };
+          include?: { _count?: { select: { tracks: true } } };
+          orderBy?: { updatedAt: 'asc' | 'desc' };
+        }) => {
+          let rows = playlists.slice();
+          if (args.where?.ownerId !== undefined) {
+            rows = rows.filter((p) => p.ownerId === args.where.ownerId);
+          }
+          if (args.orderBy?.updatedAt === 'desc') {
+            rows.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+          }
+          if (args.include?._count) {
+            return rows.map((r) => ({
+              ...r,
+              _count: { tracks: playlistTracks.filter((t) => t.playlistId === r.id).length },
+            }));
+          }
+          return rows;
+        },
+      ),
       delete: jest.fn(async (args: { where: { id: string } }) => {
         const idx = playlists.findIndex((p) => p.id === args.where.id);
         if (idx < 0) throw new Error(`Playlist ${args.where.id} not found`);
@@ -264,5 +286,28 @@ describe('PlaylistsService.remove', () => {
 
     await expect(service.remove('intruder', pl.id)).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.playlists).toHaveLength(1);
+  });
+});
+
+describe('PlaylistsService.list', () => {
+  it("returns only the calling user's own playlists, ignoring other users' public ones", async () => {
+    const { service, prisma } = buildService();
+    prisma.seed.playlist({ ownerId: 'u1', name: 'Mine A', isPublic: true });
+    prisma.seed.playlist({ ownerId: 'u1', name: 'Mine B', isPublic: false });
+    prisma.seed.playlist({ ownerId: 'u2', name: 'Other public', isPublic: true });
+    prisma.seed.playlist({ ownerId: 'u3', name: 'Stranger private', isPublic: false });
+
+    const list = await service.list('u1');
+
+    expect(list.map((p) => p.name).sort()).toEqual(['Mine A', 'Mine B']);
+  });
+
+  it('returns an empty list when the user owns nothing', async () => {
+    const { service, prisma } = buildService();
+    prisma.seed.playlist({ ownerId: 'u_other', name: 'Public', isPublic: true });
+
+    const list = await service.list('u_empty');
+
+    expect(list).toEqual([]);
   });
 });

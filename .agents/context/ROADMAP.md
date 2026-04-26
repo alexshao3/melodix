@@ -27,8 +27,8 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 
 - [ ] **Recently played history (server-side)** — new Prisma model `PlayHistory`, endpoint `GET /api/me/history`, write on each successful `play()`. Currently per-device only (`apps/{web,miniapp}/src/lib/recently-played.ts`).
 - [ ] **Follow artists** — Prisma model `Follow`, endpoints, UI on artist pages.
-- [ ] **Redis-backed cache** for Jamendo responses (TTL ~10 min). Redis is already in `docker-compose.yml` but unused.
-- [ ] **Rate limiting** on the public API (`@nestjs/throttler`).
+- [x] **Redis-backed cache** for Jamendo responses (TTL 10 min) — shipped in #7. `apps/api/src/cache/` + `cache.wrap()` around every idempotent Jamendo call. Gracefully no-ops when `REDIS_URL` is unset.
+- [x] **Rate limiting** on the public API (`@nestjs/throttler`) — shipped in #7. Three buckets: `short` (60/10s burst), `default` (300/60s sustained), `auth` (10/60s for `/auth/*`). `/api/health` is `@SkipThrottle`. ADR-0013.
 - [ ] **OpenAPI / Swagger** at `/api/docs` (read-only in production).
 - [ ] **Telegram bot deep-links** — share playlist as `t.me/<bot>?startapp=playlist_<id>`.
 - [ ] **Lyrics view** — fetch from a free lyrics provider (e.g. lyrics.ovh), cache to Redis, render on Now-Playing.

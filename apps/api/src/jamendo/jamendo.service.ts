@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Track, Album, Artist } from '@melodix/shared';
+import { CacheService } from '../cache/cache.service';
 import { DEMO_TRACKS } from './demo-data';
+
+const CACHE_TTL = 600; // 10 minutes — Jamendo catalog is largely static within this window
+const CACHE_PREFIX = 'jamendo';
 
 interface JamendoTrack {
   id: string;
@@ -47,7 +51,10 @@ export class JamendoService {
   private readonly baseUrl = 'https://api.jamendo.com/v3.0';
   private readonly clientId: string | undefined;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly cache: CacheService,
+  ) {
     this.clientId = this.config.get<string>('JAMENDO_CLIENT_ID');
     if (!this.clientId) {
       this.logger.warn(
@@ -88,36 +95,46 @@ export class JamendoService {
 
   async getTrending(limit = 24): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.slice(0, limit);
-    const results = await this.fetch<JamendoTrack>('/tracks', {
-      limit,
-      order: 'popularity_total',
-      include: 'musicinfo',
-      audioformat: 'mp32',
+    return this.cache.wrap(`${CACHE_PREFIX}:trending:${limit}`, CACHE_TTL, async () => {
+      const results = await this.fetch<JamendoTrack>('/tracks', {
+        limit,
+        order: 'popularity_total',
+        include: 'musicinfo',
+        audioformat: 'mp32',
+      });
+      return results.length ? results.map((t) => this.mapTrack(t)) : DEMO_TRACKS.slice(0, limit);
     });
-    return results.length ? results.map((t) => this.mapTrack(t)) : DEMO_TRACKS.slice(0, limit);
   }
 
   async getNewReleases(limit = 24): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.slice(0, limit);
-    const results = await this.fetch<JamendoTrack>('/tracks', {
-      limit,
-      order: 'releasedate_desc',
-      include: 'musicinfo',
-      audioformat: 'mp32',
+    return this.cache.wrap(`${CACHE_PREFIX}:new-releases:${limit}`, CACHE_TTL, async () => {
+      const results = await this.fetch<JamendoTrack>('/tracks', {
+        limit,
+        order: 'releasedate_desc',
+        include: 'musicinfo',
+        audioformat: 'mp32',
+      });
+      return results.length ? results.map((t) => this.mapTrack(t)) : DEMO_TRACKS.slice(0, limit);
     });
-    return results.length ? results.map((t) => this.mapTrack(t)) : DEMO_TRACKS.slice(0, limit);
   }
 
   async getByGenre(genre: string, limit = 24): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.filter((t) => t.genre === genre).slice(0, limit);
-    const results = await this.fetch<JamendoTrack>('/tracks', {
-      limit,
-      tags: genre,
-      order: 'popularity_total',
-      include: 'musicinfo',
-      audioformat: 'mp32',
-    });
-    return results.map((t) => this.mapTrack(t));
+    return this.cache.wrap(
+      `${CACHE_PREFIX}:genre:${genre.toLowerCase()}:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoTrack>('/tracks', {
+          limit,
+          tags: genre,
+          order: 'popularity_total',
+          include: 'musicinfo',
+          audioformat: 'mp32',
+        });
+        return results.map((t) => this.mapTrack(t));
+      },
+    );
   }
 
   async searchTracks(query: string, limit = 24): Promise<Track[]> {
@@ -130,83 +147,119 @@ export class JamendoService {
           (t.albumName?.toLowerCase().includes(q) ?? false),
       ).slice(0, limit);
     }
-    const results = await this.fetch<JamendoTrack>('/tracks', {
-      limit,
-      search: query,
-      include: 'musicinfo',
-      audioformat: 'mp32',
-    });
-    return results.map((t) => this.mapTrack(t));
+    return this.cache.wrap(
+      `${CACHE_PREFIX}:search-tracks:${query.toLowerCase()}:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoTrack>('/tracks', {
+          limit,
+          search: query,
+          include: 'musicinfo',
+          audioformat: 'mp32',
+        });
+        return results.map((t) => this.mapTrack(t));
+      },
+    );
   }
 
   async searchAlbums(query: string, limit = 12): Promise<Album[]> {
     if (!this.isLive()) {
       return [];
     }
-    const results = await this.fetch<JamendoAlbum>('/albums', {
-      limit,
-      namesearch: query,
-    });
-    return results.map((a) => this.mapAlbum(a));
+    return this.cache.wrap(
+      `${CACHE_PREFIX}:search-albums:${query.toLowerCase()}:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoAlbum>('/albums', {
+          limit,
+          namesearch: query,
+        });
+        return results.map((a) => this.mapAlbum(a));
+      },
+    );
   }
 
   async searchArtists(query: string, limit = 12): Promise<Artist[]> {
     if (!this.isLive()) {
       return [];
     }
-    const results = await this.fetch<JamendoArtist>('/artists', {
-      limit,
-      namesearch: query,
-    });
-    return results.map((a) => this.mapArtist(a));
+    return this.cache.wrap(
+      `${CACHE_PREFIX}:search-artists:${query.toLowerCase()}:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoArtist>('/artists', {
+          limit,
+          namesearch: query,
+        });
+        return results.map((a) => this.mapArtist(a));
+      },
+    );
   }
 
   async getTrackById(id: string): Promise<Track | null> {
     if (!this.isLive()) return DEMO_TRACKS.find((t) => t.id === id) ?? null;
-    const results = await this.fetch<JamendoTrack>('/tracks', {
-      id,
-      include: 'musicinfo',
-      audioformat: 'mp32',
+    return this.cache.wrap(`${CACHE_PREFIX}:track:${id}`, CACHE_TTL, async () => {
+      const results = await this.fetch<JamendoTrack>('/tracks', {
+        id,
+        include: 'musicinfo',
+        audioformat: 'mp32',
+      });
+      const first = results[0];
+      return first ? this.mapTrack(first) : null;
     });
-    const first = results[0];
-    return first ? this.mapTrack(first) : null;
   }
 
   async getAlbumTracks(albumId: string, limit = 50): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.filter((t) => t.albumId === albumId).slice(0, limit);
-    const results = await this.fetch<JamendoTrack>('/tracks', {
-      album_id: albumId,
-      limit,
-      include: 'musicinfo',
-      audioformat: 'mp32',
-    });
-    return results.map((t) => this.mapTrack(t));
+    return this.cache.wrap(
+      `${CACHE_PREFIX}:album-tracks:${albumId}:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoTrack>('/tracks', {
+          album_id: albumId,
+          limit,
+          include: 'musicinfo',
+          audioformat: 'mp32',
+        });
+        return results.map((t) => this.mapTrack(t));
+      },
+    );
   }
 
   async getArtistTracks(artistId: string, limit = 50): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.filter((t) => t.artistId === artistId).slice(0, limit);
-    const results = await this.fetch<JamendoTrack>('/tracks', {
-      artist_id: artistId,
-      limit,
-      order: 'popularity_total',
-      include: 'musicinfo',
-      audioformat: 'mp32',
-    });
-    return results.map((t) => this.mapTrack(t));
+    return this.cache.wrap(
+      `${CACHE_PREFIX}:artist-tracks:${artistId}:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoTrack>('/tracks', {
+          artist_id: artistId,
+          limit,
+          order: 'popularity_total',
+          include: 'musicinfo',
+          audioformat: 'mp32',
+        });
+        return results.map((t) => this.mapTrack(t));
+      },
+    );
   }
 
   async getAlbumById(id: string): Promise<Album | null> {
     if (!this.isLive()) return null;
-    const results = await this.fetch<JamendoAlbum>('/albums', { id });
-    const first = results[0];
-    return first ? this.mapAlbum(first) : null;
+    return this.cache.wrap(`${CACHE_PREFIX}:album:${id}`, CACHE_TTL, async () => {
+      const results = await this.fetch<JamendoAlbum>('/albums', { id });
+      const first = results[0];
+      return first ? this.mapAlbum(first) : null;
+    });
   }
 
   async getArtistById(id: string): Promise<Artist | null> {
     if (!this.isLive()) return null;
-    const results = await this.fetch<JamendoArtist>('/artists', { id });
-    const first = results[0];
-    return first ? this.mapArtist(first) : null;
+    return this.cache.wrap(`${CACHE_PREFIX}:artist:${id}`, CACHE_TTL, async () => {
+      const results = await this.fetch<JamendoArtist>('/artists', { id });
+      const first = results[0];
+      return first ? this.mapArtist(first) : null;
+    });
   }
 
   private mapTrack(t: JamendoTrack): Track {

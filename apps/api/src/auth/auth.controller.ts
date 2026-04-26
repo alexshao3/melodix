@@ -1,4 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 import { AuthService } from './auth.service';
 
@@ -28,7 +29,14 @@ class TelegramDto {
   initData!: string;
 }
 
+/**
+ * Auth endpoints opt into the stricter `auth` throttler bucket (10 req / 60 s
+ * per IP) on top of the global `short`/`default` defaults — register/login
+ * are the only externally-controllable ways to provoke a bcrypt round, so
+ * we cap them aggressively. See ADR-0013.
+ */
 @Controller('auth')
+@Throttle({ auth: { limit: 10, ttl: 60_000 } })
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
