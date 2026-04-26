@@ -47,11 +47,14 @@ export class AdminAuthService {
     const hash = await bcrypt.hash(password, 10);
 
     try {
-      const admin = await this.prisma.$transaction(async (tx) => {
-        const count = await tx.adminUser.count();
-        if (count > 0) throw new ForbiddenException('Admin already set up');
-        return tx.adminUser.create({ data: { username, password: hash } });
-      });
+      const admin = await this.prisma.$transaction(
+        async (tx) => {
+          const count = await tx.adminUser.count();
+          if (count > 0) throw new ForbiddenException('Admin already set up');
+          return tx.adminUser.create({ data: { username, password: hash } });
+        },
+        { isolationLevel: 'Serializable' },
+      );
       return { id: admin.id, username: admin.username };
     } catch (err) {
       if (err instanceof ForbiddenException) throw err;
