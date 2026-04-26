@@ -92,14 +92,14 @@ play, and test all flows without any external dependency.
 
 ## Scripts
 
-| Command | What it does |
-| --- | --- |
-| `pnpm dev` | Run web + miniapp + api in parallel |
-| `pnpm build` | Build everything |
-| `pnpm typecheck` | Type-check every package |
-| `pnpm lint` | Lint every package |
-| `pnpm --filter @melodix/api prisma:migrate` | Apply migrations |
-| `pnpm --filter @melodix/api prisma:seed` | Seed the demo user |
+| Command                                     | What it does                        |
+| ------------------------------------------- | ----------------------------------- |
+| `pnpm dev`                                  | Run web + miniapp + api in parallel |
+| `pnpm build`                                | Build everything                    |
+| `pnpm typecheck`                            | Type-check every package            |
+| `pnpm lint`                                 | Lint every package                  |
+| `pnpm --filter @melodix/api prisma:migrate` | Apply migrations                    |
+| `pnpm --filter @melodix/api prisma:seed`    | Seed the demo user                  |
 
 ## Tech stack
 
@@ -107,6 +107,32 @@ play, and test all flows without any external dependency.
 - **Backend:** NestJS 10, Prisma 6, PostgreSQL, JWT auth (passport)
 - **Music:** Jamendo Creative-Commons API (with bundled demo fallback)
 - **Build system:** pnpm workspaces + Turborepo
+
+## For AI agents (and humans onboarding fast)
+
+Melodix ships an opinionated, token-efficient context system so that any AI
+agent (Devin, Claude Code, Cursor, Codex, …) — or a new human contributor —
+can reach productive work after reading at most 1–3 small files.
+
+Start at **[`AGENTS.md`](AGENTS.md)**. It routes you to the right deep-dive:
+
+| Where                                                                              | What's in there                                                               |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`AGENTS.md`](AGENTS.md)                                                           | 30-second TL;DR + a routing table from "I want to do X" to "read these files" |
+| [`.agents/context/PROJECT.md`](.agents/context/PROJECT.md)                         | Vision, audience, success criteria                                            |
+| [`.agents/context/ARCHITECTURE.md`](.agents/context/ARCHITECTURE.md)               | Module map across api / web / miniapp / shared / ui                           |
+| [`.agents/context/FEATURES.md`](.agents/context/FEATURES.md)                       | Live catalog of features with status (✅ / 🟡 / 🔵)                           |
+| [`.agents/context/ROADMAP.md`](.agents/context/ROADMAP.md)                         | Short / mid / long-term feature plan                                          |
+| [`.agents/context/PROGRESS.md`](.agents/context/PROGRESS.md)                       | Running changelog of what's been built                                        |
+| [`.agents/context/STACK.md`](.agents/context/STACK.md)                             | Versions, ports, env vars, scripts                                            |
+| [`.agents/context/GLOSSARY.md`](.agents/context/GLOSSARY.md)                       | Domain terms                                                                  |
+| [`.agents/context/DECISIONS.md`](.agents/context/DECISIONS.md)                     | Architectural Decision Records (ADRs)                                         |
+| [`.agents/skills/update-context/SKILL.md`](.agents/skills/update-context/SKILL.md) | Step-by-step: how to keep the above files fresh on every PR                   |
+
+Every PR that changes code is required to update the relevant context files in
+the same commit-set. The PR template enforces this with a checklist, and the
+`AI Context Freshness` GitHub Action posts a warning if a code change lands
+without a context update.
 
 ## License
 
