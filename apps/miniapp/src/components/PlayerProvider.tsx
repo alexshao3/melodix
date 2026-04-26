@@ -1,8 +1,17 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { Track } from '@melodix/shared';
 import { tgHaptic } from '@/lib/telegram';
+import { pushRecentlyPlayed } from '@/lib/recently-played';
 
 interface PlayerContextValue {
   currentTrack: Track | null;
@@ -66,6 +75,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     a.src = t.streamUrl ?? t.audioUrl;
     setCurrentTrack(t);
     setPosition(0);
+    pushRecentlyPlayed(t);
     a.play().catch(() => undefined);
   }, []);
 
@@ -74,7 +84,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       tgHaptic('light');
       if (newQueue) {
         const idx = newQueue.findIndex((t) => t.id === track.id);
-        const upcoming = idx >= 0 ? newQueue.slice(idx + 1) : newQueue.filter((t) => t.id !== track.id);
+        const upcoming =
+          idx >= 0 ? newQueue.slice(idx + 1) : newQueue.filter((t) => t.id !== track.id);
         setQueue(upcoming);
       }
       if (currentTrack && currentTrack.id !== track.id) {

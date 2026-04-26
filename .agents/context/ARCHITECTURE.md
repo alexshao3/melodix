@@ -48,18 +48,18 @@ pnpm-workspace.yaml   Workspace globs
 Bootstrapped at [`apps/api/src/main.ts`](../../apps/api/src/main.ts). Module
 graph at [`apps/api/src/app.module.ts`](../../apps/api/src/app.module.ts).
 
-| Module             | Folder                 | Responsibility                                                    | Public routes                                                                                           |
-| ------------------ | ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `AuthModule`       | `auth/`                | Register / login / Telegram `initData` verification, JWT issuance | `POST /api/auth/{register,login,telegram}`                                                              |
-| `UsersModule`      | `users/`               | Current user, likes                                               | `GET /api/me`, `GET/POST/DELETE /api/me/likes/...`                                                      |
-| `TracksModule`     | `tracks/`              | Trending, new releases, by-genre, by-id                           | `GET /api/tracks/{trending,new-releases,genre/:g,:id}`                                                  |
-| `AlbumsModule`     | `albums/`              | List & fetch albums                                               | `GET /api/albums`, `GET /api/albums/:id`                                                                |
-| `ArtistsModule`    | `artists/`             | List & fetch artists                                              | `GET /api/artists`, `GET /api/artists/:id`                                                              |
-| `PlaylistsModule`  | `playlists/`           | Featured + CRUD + add/remove tracks                               | `GET /api/playlists/{featured,:id}`, `POST /api/playlists`, `POST/DELETE /api/playlists/:id/tracks/...` |
-| `SearchModule`     | `search/`              | Unified search across tracks/albums/artists                       | `GET /api/search`                                                                                       |
-| `JamendoModule`    | `jamendo/`             | HTTP client for Jamendo + `DEMO_TRACKS` fallback                  | (internal)                                                                                              |
-| `PrismaModule`     | `prisma/`              | Prisma client singleton                                           | (internal)                                                                                              |
-| `HealthController` | `health.controller.ts` | Liveness probe                                                    | `GET /api/health`                                                                                       |
+| Module             | Folder                 | Responsibility                                                         | Public routes                                                                                                                                                                                        |
+| ------------------ | ---------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AuthModule`       | `auth/`                | Register / login / Telegram `initData` verification, JWT issuance      | `POST /api/auth/{register,login,telegram}`                                                                                                                                                           |
+| `UsersModule`      | `users/`               | Current user, likes                                                    | `GET /api/me`, `GET/POST/DELETE /api/me/likes/...`                                                                                                                                                   |
+| `TracksModule`     | `tracks/`              | Trending, new releases, by-genre, by-id                                | `GET /api/tracks/{trending,new-releases,genre/:g,:id}`                                                                                                                                               |
+| `AlbumsModule`     | `albums/`              | List & fetch albums                                                    | `GET /api/albums`, `GET /api/albums/:id`                                                                                                                                                             |
+| `ArtistsModule`    | `artists/`             | List & fetch artists                                                   | `GET /api/artists`, `GET /api/artists/:id`                                                                                                                                                           |
+| `PlaylistsModule`  | `playlists/`           | Featured + CRUD + add/remove tracks + edit metadata + reorder + delete | `GET /api/playlists/{featured,:id}`, `POST /api/playlists`, `POST/DELETE /api/playlists/:id/tracks/...`, `PATCH /api/playlists/:id`, `PATCH /api/playlists/:id/reorder`, `DELETE /api/playlists/:id` |
+| `SearchModule`     | `search/`              | Unified search across tracks/albums/artists                            | `GET /api/search`                                                                                                                                                                                    |
+| `JamendoModule`    | `jamendo/`             | HTTP client for Jamendo + `DEMO_TRACKS` fallback                       | (internal)                                                                                                                                                                                           |
+| `PrismaModule`     | `prisma/`              | Prisma client singleton                                                | (internal)                                                                                                                                                                                           |
+| `HealthController` | `health.controller.ts` | Liveness probe                                                         | `GET /api/health`                                                                                                                                                                                    |
 
 **Persistence.** Prisma schema at [`apps/api/prisma/schema.prisma`](../../apps/api/prisma/schema.prisma).
 Models: `User`, `Artist`, `Album`, `Track`, `Playlist`, `PlaylistTrack`, `Like`.
@@ -84,22 +84,25 @@ src/app/
   page.tsx            Home (Hero + featured sections)
   discover/page.tsx   Discover by genre / mood
   search/page.tsx     Search (server) + SearchClient.tsx (client)
-  library/page.tsx    Auth-gated user library
+  library/page.tsx    Auth-gated user library: 3 sections (your playlists / liked / recently played) + CreatePlaylistDialog
   login/page.tsx      Login / register
   albums/[id]/        Album detail page
   artists/[id]/       Artist detail page
-  playlists/[id]/     Playlist detail + PlayPlaylistButton
+  playlists/[id]/     Playlist detail + PlayPlaylistButton + PlaylistAuthBoundary (owner-only edit)
   loading.tsx         Skeleton fallback for the home route (others co-located per route)
 src/components/
   hero/               Hero, OrbitingCovers, AudioVisualizer
   layout/             AppShell, Sidebar, MobileNav, TopBar
+  library/            CreatePlaylistDialog (used by /library)
   motion/             MotionRoot ← framer-motion `MotionConfig reducedMotion="user"`
-  player/             PlayerProvider, PlayerBar  ← global audio engine
+  player/             PlayerProvider, PlayerBar  ← global audio engine; pushes recently-played
+  playlist/           EditPlaylistDialog, EditableTrackList, PlaylistOwnerControls, PlaylistAuthBoundary
   sections/           Section wrappers, TrackList, TrackGrid, PlaylistGrid, MoodPills, PlayTracksButton
   theme/              ThemeProvider (next-themes), ThemeToggle (Sun/Moon button)
 src/lib/
   api.ts              fetch helpers wrapping NEXT_PUBLIC_API_URL
   cn.ts               className helper
+  recently-played.ts  localStorage helper for client-side play history (ADR-0010)
 ```
 
 **Audio engine.** `PlayerProvider` ([`player/PlayerProvider.tsx`](../../apps/web/src/components/player/PlayerProvider.tsx))
@@ -118,16 +121,21 @@ Telegram-native chrome.
 ```
 src/app/
   page.tsx           Mini home
-  discover/, search/, playlists/[id]/, albums/[id]/, artists/[id]/
+  discover/, search/, library/, playlists/[id]/, albums/[id]/, artists/[id]/
 src/components/
-  PlayerProvider.tsx     leaner audio engine (no MediaSession-heavy bits)
+  PlayerProvider.tsx     leaner audio engine (no MediaSession-heavy bits); pushes recently-played
   MiniPlayer.tsx         compact player UI
-  MiniNav.tsx            bottom nav
+  LibraryClient.tsx      /library content (your playlists / liked / recently played)
+  CreatePlaylistSheet.tsx slim bottom sheet for creating a playlist
+  PlaylistEditSheet.tsx   slim bottom sheet (rename / cover / public-private / delete)
+  PlaylistOwnerGate.tsx   resolves /me on mount and gates the edit sheet
+  MiniNav.tsx            bottom nav (Home / Discover / Library / Search)
   MiniTrackRow.tsx       single-line track row
   MotionRoot.tsx         framer-motion `MotionConfig reducedMotion="user"`
   TelegramSync.tsx       reads window.Telegram.WebApp, expands viewport, syncs theme, triggers haptics
 src/lib/
   api.ts                 same fetch wrapper, different base URL
+  recently-played.ts     localStorage mirror of the web helper
   telegram.ts            typed wrapper around window.Telegram.WebApp
 ```
 

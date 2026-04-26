@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, Home, Search } from 'lucide-react';
+import { Compass, Heart, Home, Search } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 const ITEMS = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/discover', label: 'Discover', icon: Compass },
+  { href: '/library', label: 'Library', icon: Heart },
   { href: '/search', label: 'Search', icon: Search },
 ];
 
@@ -15,7 +16,7 @@ export function MiniNav() {
   const pathname = usePathname();
   return (
     <nav className="fixed inset-x-3 bottom-[88px] z-30 rounded-2xl border border-white/10 bg-black/70 px-2 py-1 backdrop-blur-xl">
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-4">
         {ITEMS.map(({ href, label, icon: Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
           return (

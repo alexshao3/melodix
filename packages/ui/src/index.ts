@@ -15,3 +15,4 @@ export {
   CardSkeletonGrid,
   HeaderSkeleton,
 } from './components/Skeleton';
+export { Modal } from './components/Modal';

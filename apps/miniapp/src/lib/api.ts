@@ -34,6 +34,26 @@ async function post<T>(path: string, body: unknown): Promise<T | null> {
   }
 }
 
+async function authed<T>(path: string, init?: RequestInit & { jsonBody?: unknown }): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set('Accept', 'application/json');
+  const t = token();
+  if (t) headers.set('Authorization', `Bearer ${t}`);
+  let body = init?.body;
+  if (init?.jsonBody !== undefined) {
+    headers.set('Content-Type', 'application/json');
+    body = JSON.stringify(init.jsonBody);
+  }
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers,
+    body,
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`API ${path} -> ${res.status}`);
+  return (await res.json()) as T;
+}
+
 export const api = {
   trending: () => safe<Track[]>(`/api/tracks/trending?limit=20`, []),
   newReleases: () => safe<Track[]>(`/api/tracks/new-releases?limit=20`, []),
@@ -60,4 +80,28 @@ export const api = {
       null,
     ),
   telegramLogin: (initData: string) => post<{ token: string }>(`/api/auth/telegram`, { initData }),
+
+  myPlaylists: () => authed<Playlist[]>(`/api/playlists`),
+  likes: () => authed<Track[]>(`/api/me/likes`),
+  createPlaylist: (name: string, description?: string) =>
+    authed<Playlist>(`/api/playlists`, {
+      method: 'POST',
+      jsonBody: { name, description },
+    }),
+  updatePlaylist: (
+    id: string,
+    patch: {
+      name?: string;
+      description?: string | null;
+      cover?: string | null;
+      isPublic?: boolean;
+    },
+  ) =>
+    authed<Playlist>(`/api/playlists/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      jsonBody: patch,
+    }),
+  deletePlaylist: (id: string) =>
+    authed<{ ok: true }>(`/api/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  me: () => authed<{ id: string; username: string }>(`/api/me`),
 };

@@ -15,8 +15,8 @@ Statuses: `[ ]` not started · `[~]` in progress · `[x]` shipped · `[-]` dropp
 These finish the v0 → v1 polish so the product feels complete to first-time visitors.
 
 - [x] **Album & artist detail pages** — full track lists, hero header, Play album / Play top tracks button, biography section. Web at `/albums/[id]` & `/artists/[id]`; Mini App equivalents in `apps/miniapp/src/app/`. _(shipped in #4)_
-- [ ] **Library page v1** — sections for "Your playlists", "Liked songs", "Recently played"; editable.
-- [ ] **Playlist editor UI** — rename, reorder, set cover, toggle public/private. Backend exists, UI doesn't.
+- [x] **Library page v1** — web `/library` and Mini App `/library` show 3 sections (your playlists / liked songs / recently played) with sign-in CTA when logged out. _(shipped in #6)_
+- [x] **Playlist editor UI** — owner-only Edit dialog (rename / cover URL / public-private / delete) plus per-row reorder + remove on web; slim bottom-sheet equivalent in the Mini App. Backed by new `PATCH /playlists/:id`, `PATCH /playlists/:id/reorder`, `DELETE /playlists/:id` endpoints. _(shipped in #6; ADR-0010 documents the localStorage "recently played".)_
 - [x] **Skeleton loaders** — `Skeleton`, `TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton` exported from `@melodix/ui`; per-route `loading.tsx` files for home, discover, library, album/artist/playlist details. _(shipped in #4)_
 - [x] **`prefers-reduced-motion` audit** — global CSS rule in `app/globals.css` collapses CSS animations & transitions; `MotionRoot` wraps both apps in `MotionConfig reducedMotion="user"` so framer-motion respects it too. _(shipped in #4)_
 - [x] **Light-mode toggle on web** — `next-themes` (`attribute="class"`, default `dark`); `ThemeProvider` wraps the layout, `ThemeToggle` (Sun/Moon) sits in the TopBar; light overrides live in `apps/web/src/app/globals.css` under `.light` selectors. _(closes H1; ADR-0009 documents the override approach.)_
@@ -25,7 +25,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 
 ## H2 — Mid-term (next ~1–2 months)
 
-- [ ] **Recently played history (server-side)** — new Prisma model `PlayHistory`, endpoint `GET /api/me/history`, write on each successful `play()`.
+- [ ] **Recently played history (server-side)** — new Prisma model `PlayHistory`, endpoint `GET /api/me/history`, write on each successful `play()`. Currently per-device only (`apps/{web,miniapp}/src/lib/recently-played.ts`).
 - [ ] **Follow artists** — Prisma model `Follow`, endpoints, UI on artist pages.
 - [ ] **Redis-backed cache** for Jamendo responses (TTL ~10 min). Redis is already in `docker-compose.yml` but unused.
 - [ ] **Rate limiting** on the public API (`@nestjs/throttler`).

@@ -1,10 +1,4 @@
-import type {
-  Album,
-  Artist,
-  Playlist,
-  SearchResults,
-  Track,
-} from '@melodix/shared';
+import type { Album, Artist, Playlist, SearchResults, Track } from '@melodix/shared';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -38,7 +32,9 @@ async function safe<T>(path: string, fallback: T, init?: RequestInit): Promise<T
   } catch (err) {
     if (typeof window === 'undefined') {
       // eslint-disable-next-line no-console
-      console.warn(`[melodix] API call failed for ${path}, returning fallback. ${(err as Error).message}`);
+      console.warn(
+        `[melodix] API call failed for ${path}, returning fallback. ${(err as Error).message}`,
+      );
     }
     return fallback;
   }
@@ -55,20 +51,56 @@ export const api = {
   artist: (id: string) =>
     request<{ artist: Artist; tracks: Track[] }>(`/api/artists/${encodeURIComponent(id)}`),
   search: (q: string) =>
-    safe<SearchResults>(
-      `/api/search?q=${encodeURIComponent(q)}`,
-      { tracks: [], albums: [], artists: [], playlists: [] },
-    ),
+    safe<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`, {
+      tracks: [],
+      albums: [],
+      artists: [],
+      playlists: [],
+    }),
   featuredPlaylists: () => safe<Playlist[]>(`/api/playlists/featured`, []),
   playlist: (id: string) =>
     request<{ playlist: Playlist; tracks: Track[] }>(`/api/playlists/${encodeURIComponent(id)}`),
+  myPlaylists: () => request<Playlist[]>(`/api/playlists`),
+  createPlaylist: (name: string, description?: string) =>
+    request<Playlist>(`/api/playlists`, {
+      method: 'POST',
+      body: JSON.stringify({ name, description }),
+    }),
+  updatePlaylist: (
+    id: string,
+    patch: {
+      name?: string;
+      description?: string | null;
+      cover?: string | null;
+      isPublic?: boolean;
+    },
+  ) =>
+    request<Playlist>(`/api/playlists/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }),
+  reorderPlaylist: (id: string, trackIds: string[]) =>
+    request<{ ok: true }>(`/api/playlists/${encodeURIComponent(id)}/reorder`, {
+      method: 'PATCH',
+      body: JSON.stringify({ trackIds }),
+    }),
+  deletePlaylist: (id: string) =>
+    request<{ ok: true }>(`/api/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  removePlaylistTrack: (id: string, trackId: string) =>
+    request<{ ok: true }>(
+      `/api/playlists/${encodeURIComponent(id)}/tracks/${encodeURIComponent(trackId)}`,
+      { method: 'DELETE' },
+    ),
 
-  me: () => request<{ id: string; username: string; displayName?: string; avatar?: string }>(`/api/me`),
+  me: () =>
+    request<{ id: string; username: string; displayName?: string; avatar?: string }>(`/api/me`),
   likes: () => request<Track[]>(`/api/me/likes`),
   like: (trackId: string) =>
     request<{ liked: boolean }>(`/api/me/likes/${encodeURIComponent(trackId)}`, { method: 'POST' }),
   unlike: (trackId: string) =>
-    request<{ liked: boolean }>(`/api/me/likes/${encodeURIComponent(trackId)}`, { method: 'DELETE' }),
+    request<{ liked: boolean }>(`/api/me/likes/${encodeURIComponent(trackId)}`, {
+      method: 'DELETE',
+    }),
 
   login: (emailOrUsername: string, password: string) =>
     request<{ token: string; user: { id: string; username: string } }>(`/api/auth/login`, {

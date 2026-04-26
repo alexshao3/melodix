@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JamendoService } from '../jamendo/jamendo.service';
 import type { Playlist, Track } from '@melodix/shared';
@@ -57,7 +62,10 @@ const FEATURED: Array<{
 
 @Injectable()
 export class PlaylistsService {
-  constructor(private readonly prisma: PrismaService, private readonly jamendo: JamendoService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jamendo: JamendoService,
+  ) {}
 
   featured(): Playlist[] {
     return FEATURED.map((f) => ({
@@ -161,6 +169,92 @@ export class PlaylistsService {
     if (!p) throw new NotFoundException();
     if (p.ownerId !== userId) throw new ForbiddenException();
     await this.prisma.playlistTrack.deleteMany({ where: { playlistId, trackId } });
+    await this.prisma.playlist.update({
+      where: { id: playlistId },
+      data: { updatedAt: new Date() },
+    });
+    return { ok: true };
+  }
+
+  async update(
+    userId: string,
+    playlistId: string,
+    patch: {
+      name?: string;
+      description?: string | null;
+      cover?: string | null;
+      isPublic?: boolean;
+    },
+  ): Promise<Playlist> {
+    if (FEATURED.some((f) => f.id === playlistId)) {
+      throw new ForbiddenException('Featured playlists are read-only');
+    }
+    const existing = await this.prisma.playlist.findUnique({ where: { id: playlistId } });
+    if (!existing) throw new NotFoundException('Playlist not found');
+    if (existing.ownerId !== userId) throw new ForbiddenException();
+
+    const data: {
+      name?: string;
+      description?: string | null;
+      cover?: string | null;
+      isPublic?: boolean;
+    } = {};
+    if (patch.name !== undefined) data.name = patch.name;
+    if (patch.description !== undefined) data.description = patch.description;
+    if (patch.cover !== undefined) data.cover = patch.cover;
+    if (patch.isPublic !== undefined) data.isPublic = patch.isPublic;
+
+    const updated = await this.prisma.playlist.update({
+      where: { id: playlistId },
+      data,
+      include: { _count: { select: { tracks: true } } },
+    });
+    return this.toPlaylist(updated, updated._count.tracks);
+  }
+
+  async reorder(userId: string, playlistId: string, trackIds: string[]) {
+    if (FEATURED.some((f) => f.id === playlistId)) {
+      throw new ForbiddenException('Featured playlists are read-only');
+    }
+    const p = await this.prisma.playlist.findUnique({
+      where: { id: playlistId },
+      include: { tracks: true },
+    });
+    if (!p) throw new NotFoundException('Playlist not found');
+    if (p.ownerId !== userId) throw new ForbiddenException();
+
+    const existingIds = new Set(p.tracks.map((t) => t.trackId));
+    const incomingIds = new Set(trackIds);
+    if (
+      existingIds.size !== incomingIds.size ||
+      [...existingIds].some((id) => !incomingIds.has(id))
+    ) {
+      throw new BadRequestException('trackIds must be a permutation of the playlist');
+    }
+
+    await this.prisma.$transaction([
+      ...trackIds.map((trackId, position) =>
+        this.prisma.playlistTrack.update({
+          where: { playlistId_trackId: { playlistId, trackId } },
+          data: { position },
+        }),
+      ),
+      this.prisma.playlist.update({
+        where: { id: playlistId },
+        data: { updatedAt: new Date() },
+      }),
+    ]);
+    return { ok: true };
+  }
+
+  async remove(userId: string, playlistId: string) {
+    if (FEATURED.some((f) => f.id === playlistId)) {
+      throw new ForbiddenException('Featured playlists are read-only');
+    }
+    const p = await this.prisma.playlist.findUnique({ where: { id: playlistId } });
+    if (!p) throw new NotFoundException('Playlist not found');
+    if (p.ownerId !== userId) throw new ForbiddenException();
+    await this.prisma.playlist.delete({ where: { id: playlistId } });
     return { ok: true };
   }
 
