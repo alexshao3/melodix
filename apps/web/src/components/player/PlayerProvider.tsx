@@ -61,7 +61,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const audio = new Audio();
     audio.preload = 'metadata';
-    audio.crossOrigin = 'anonymous';
     audioRef.current = audio;
 
     const onTime = () => setPosition(audio.currentTime);

@@ -165,19 +165,25 @@ Per-app Dockerfiles produce optimised production images:
 | `apps/web/Dockerfile`     | node:22-alpine | Multi-stage. Next.js `output: 'standalone'`. `NEXT_PUBLIC_API_URL` set via build arg. |
 | `apps/miniapp/Dockerfile` | node:22-alpine | Same pattern as web.                                                                  |
 
-`docker-compose.prod.yml` orchestrates all services + a Cloudflare Tunnel sidecar:
+`docker-compose.yml` orchestrates all services + a Cloudflare Tunnel sidecar:
 
 ```bash
 # Quick start
 cp .env.production.example .env.production   # edit values
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+docker compose --env-file .env.production up -d --build
 ```
 
-Services: `postgres`, `redis`, `api`, `web`, `miniapp`, `cloudflared`.
+Services: `api`, `web`, `miniapp`, `cloudflared` (active). `postgres` and `redis` are
+commented out — currently using cloud providers. Uncomment to run locally.
 
 Database and Redis can be swapped for cloud providers (Supabase, Neon, Upstash, etc.)
-by changing `DATABASE_URL` / `REDIS_URL` in `.env.production` and removing the
-corresponding container from the compose file.
+by changing `DATABASE_URL` / `REDIS_URL` in `.env.production`.
+
+`docker-compose.dev.yml` provides local Postgres + Redis for development (no env vars needed):
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
 
 ## Pre-commit (local)
 

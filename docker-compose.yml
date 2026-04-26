@@ -1,31 +1,131 @@
+###############################################################################
+# Melodix — Docker Compose (self-hosted with Cloudflare Tunnel)
+#
+# Usage:
+#   1. Copy .env.production.example → .env.production and fill in your values
+#   2. docker compose --env-file .env.production up -d --build
+#
+# Cloud database / Redis:
+#   Set DATABASE_URL and REDIS_URL in .env.production to your cloud provider
+#   (e.g. Supabase, Neon, Upstash) and uncomment the local services below
+#   only if you want to run them locally instead.
+###############################################################################
+
 services:
+  # ── Infrastructure ─────────────────────────────────────────────────
+  # Postgres disabled — using cloud database. Uncomment to use local Postgres.
   # postgres:
   #   image: postgres:16-alpine
   #   container_name: melodix-postgres
   #   restart: unless-stopped
   #   environment:
-  #     POSTGRES_USER: melodix
-  #     POSTGRES_PASSWORD: melodix
-  #     POSTGRES_DB: melodix
-  #   ports:
-  #     - '5432:5432'
+  #     POSTGRES_USER: ${POSTGRES_USER:-melodix}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melodix}
+  #     POSTGRES_DB: ${POSTGRES_DB:-melodix}
   #   volumes:
   #     - melodix_postgres_data:/var/lib/postgresql/data
   #   healthcheck:
-  #     test: ['CMD-SHELL', 'pg_isready -U melodix -d melodix']
+  #     test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-melodix} -d ${POSTGRES_DB:-melodix}']
   #     interval: 5s
   #     timeout: 5s
   #     retries: 5
+  #   ports:
+  #     - '5432:5432'
 
-  redis:
-    image: redis:7-alpine
-    container_name: melodix-redis
+  # Redis disabled — using cloud Redis. Uncomment to use local Redis.
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: melodix-redis
+  #   restart: unless-stopped
+  #   volumes:
+  #     - melodix_redis_data:/data
+  #   healthcheck:
+  #     test: ['CMD', 'redis-cli', 'ping']
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
+  #   ports:
+  #     - '6379:6379'
+
+  # ── API (NestJS + Prisma) ──────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: melodix-api
     restart: unless-stopped
-    ports:
-      - '6379:6379'
-    volumes:
-      - melodix_redis_data:/data
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://melodix:melodix@postgres:5432/melodix?schema=public}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JAMENDO_CLIENT_ID: ${JAMENDO_CLIENT_ID:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      PORT: '4000'
+      NODE_ENV: production
+    # Uncomment to expose API externally for debugging
+    # ports:
+    #   - '4000:4000'
 
-volumes:
-  # melodix_postgres_data:
-  melodix_redis_data:
+  # ── Web (Next.js main site) ────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4000}
+    container_name: melodix-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      HOSTNAME: '0.0.0.0'
+      PORT: '3000'
+    # Uncomment to expose web externally for debugging
+    # ports:
+    #   - '3000:3000'
+
+  # ── Mini App (Next.js Telegram Mini App) ───────────────────────────
+  miniapp:
+    build:
+      context: .
+      dockerfile: apps/miniapp/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4000}
+    container_name: melodix-miniapp
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      HOSTNAME: '0.0.0.0'
+      PORT: '3001'
+    # Uncomment to expose miniapp externally for debugging
+    # ports:
+    #   - '3001:3001'
+
+  # ── Cloudflare Tunnel ──────────────────────────────────────────────
+  # Exposes your services to the internet without opening ports.
+  #
+  # Setup:
+  #   1. Go to https://one.dash.cloudflare.com → Networks → Tunnels
+  #   2. Create a tunnel, copy the tunnel token
+  #   3. Add public hostnames pointing to the internal services:
+  #      - melodix.yourdomain.com    → http://web:3000
+  #      - api.melodix.yourdomain.com → http://api:4000
+  #      - app.melodix.yourdomain.com → http://miniapp:3001
+  #   4. Set CLOUDFLARE_TUNNEL_TOKEN in .env.production
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: melodix-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
+    depends_on:
+      - web
+      - api
+      - miniapp
+
+# volumes:
+#   melodix_postgres_data:
+#   melodix_redis_data:

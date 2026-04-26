@@ -53,7 +53,7 @@ pnpm install
 ### 3. Start infra (optional, only needed for auth/playlists/likes)
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d
 cp apps/api/.env.example apps/api/.env
 pnpm --filter @melodix/api prisma:generate
 pnpm --filter @melodix/api prisma:migrate
