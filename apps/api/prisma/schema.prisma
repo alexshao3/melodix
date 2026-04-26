@@ -173,3 +173,22 @@ model Like {
   @@index([userId])
   @@map("likes")
 }
+
+// ── Admin ──────────────────────────────────────────────────────────
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  @@map("admin_users")
+}
+
+model MusicSource {
+  name     String  @id
+  enabled  Boolean @default(true)
+  priority Int     @default(0)
+
+  @@map("music_sources")
+}

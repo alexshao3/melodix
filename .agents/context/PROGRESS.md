@@ -12,6 +12,7 @@
 
 ### April
 
+- 2026-04-26 · _(this PR)_ · feat(admin): Phase 1 — Admin API foundations. New modules: `AdminAuthModule` (separate admin JWT strategy), `AdminTracksModule` (CRUD uploaded tracks with multipart file upload → Cloudflare R2), `MusicSourcesModule` (toggle music sources on/off), `StorageModule` (S3-compatible R2 client). Prisma models: `AdminUser`, `MusicSource`. `TracksService` and `SearchService` now merge Jamendo + uploaded results based on enabled sources. 5 new R2 env vars. FEATURES/ARCHITECTURE/STACK/DECISIONS updated; ADR-0020 added.
 - 2026-04-26 · #18 · fix(miniapp): fix player/nav overlap layout — MiniNav moved to bottom, MiniPlayer positioned above it, main content padding increased.
 - 2026-04-26 · #17 · fix: remove `crossOrigin` on Audio elements to fix Jamendo playback in both web and miniapp player providers. Also: merged `docker-compose.prod.yml` into `docker-compose.yml` (single file), commented out postgres + redis services (using cloud).
 - 2026-04-26 · _(this PR)_ · Docker Compose self-host with Cloudflare Tunnel. Per-app multi-stage Dockerfiles (`apps/{api,web,miniapp}/Dockerfile`), `docker-compose.prod.yml` orchestrating postgres + redis + api + web + miniapp + `cloudflared` tunnel sidecar, `.env.production.example` with cloud DB/Redis swap instructions, `output: 'standalone'` for both Next.js apps, `.dockerignore`. ARCHITECTURE/STACK/DECISIONS updated; ADR-0019 added.

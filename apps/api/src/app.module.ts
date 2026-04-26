@@ -15,6 +15,10 @@ import { UsersModule } from './users/users.module';
 import { HistoryModule } from './history/history.module';
 import { FollowsModule } from './follows/follows.module';
 import { LyricsModule } from './lyrics/lyrics.module';
+import { AdminAuthModule } from './admin-auth/admin-auth.module';
+import { AdminTracksModule } from './admin-tracks/admin-tracks.module';
+import { MusicSourcesModule } from './music-sources/music-sources.module';
+import { StorageModule } from './storage/storage.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -49,6 +53,10 @@ import { HealthController } from './health.controller';
     HistoryModule,
     FollowsModule,
     LyricsModule,
+    StorageModule,
+    AdminAuthModule,
+    AdminTracksModule,
+    MusicSourcesModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

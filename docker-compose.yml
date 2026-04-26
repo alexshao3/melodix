@@ -61,6 +61,11 @@ services:
       JAMENDO_CLIENT_ID: ${JAMENDO_CLIENT_ID:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-melodix}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
       PORT: '4000'
       NODE_ENV: production
     # Uncomment to expose API externally for debugging
