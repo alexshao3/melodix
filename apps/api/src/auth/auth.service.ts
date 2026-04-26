@@ -86,15 +86,40 @@ export class AuthService {
     if (!tg) throw new UnauthorizedException('Invalid Telegram initData');
 
     const telegramId = String(tg.id);
-    const username = tg.username ?? `tg_${telegramId}`;
-    const displayName = [tg.first_name, tg.last_name].filter(Boolean).join(' ') || username;
+    const desiredUsername = tg.username ?? `tg_${telegramId}`;
+    const displayName = [tg.first_name, tg.last_name].filter(Boolean).join(' ') || desiredUsername;
 
-    const user = await this.prisma.user.upsert({
-      where: { telegramId },
-      update: { displayName, avatar: tg.photo_url },
-      create: { telegramId, username, displayName, avatar: tg.photo_url },
+    const existing = await this.prisma.user.findUnique({ where: { telegramId } });
+    if (existing) {
+      const updated = await this.prisma.user.update({
+        where: { telegramId },
+        data: { displayName, avatar: tg.photo_url },
+      });
+      return this.makeAuth(updated);
+    }
+
+    const username = await this.uniqueUsername(desiredUsername, telegramId);
+    const created = await this.prisma.user.create({
+      data: { telegramId, username, displayName, avatar: tg.photo_url },
     });
-    return this.makeAuth(user);
+    return this.makeAuth(created);
+  }
+
+  private async uniqueUsername(desired: string, telegramId: string): Promise<string> {
+    const taken = await this.prisma.user.findUnique({ where: { username: desired } });
+    if (!taken) return desired;
+    const fallback = `tg_${telegramId}`;
+    if (desired !== fallback) {
+      const fallbackTaken = await this.prisma.user.findUnique({ where: { username: fallback } });
+      if (!fallbackTaken) return fallback;
+    }
+    for (let i = 0; i < 5; i++) {
+      const suffix = Math.random().toString(36).slice(2, 7);
+      const candidate = `${fallback}_${suffix}`;
+      const exists = await this.prisma.user.findUnique({ where: { username: candidate } });
+      if (!exists) return candidate;
+    }
+    throw new BadRequestException('Could not allocate a unique username for Telegram user');
   }
 
   private makeAuth(user: { id: string; username: string }): AuthResponse {

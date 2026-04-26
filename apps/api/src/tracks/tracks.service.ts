@@ -19,7 +19,7 @@ export class TracksService {
   }
 
   async byId(id: string): Promise<Track> {
-    const externalId = id.startsWith('jm_') ? id.slice(3) : id.startsWith('demo_t_') ? id.slice(7) : id;
+    const externalId = id.startsWith('jm_') ? id.slice(3) : id;
     const t = await this.jamendo.getTrackById(externalId);
     if (!t) throw new NotFoundException(`Track ${id} not found`);
     return t;
