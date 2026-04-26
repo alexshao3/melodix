@@ -81,7 +81,7 @@ describe('LyricsService.fetch', () => {
     expect(out.lyrics).toBeNull();
   });
 
-  it('returns a graceful "none" when the provider throws — and does NOT cache the failure', async () => {
+  it('returns a graceful "none" when the provider throws — and caches the miss with the short TTL', async () => {
     const cache = buildCacheStub();
     withFetch(async () => {
       throw new Error('network down');
@@ -95,6 +95,8 @@ describe('LyricsService.fetch', () => {
     // response with a short TTL so a hammered upstream gets breathing
     // room. The "uncached" scenario is reserved for empty input.
     expect(cache.set).toHaveBeenCalledTimes(1);
+    const [, , ttl] = cache.set.mock.calls[0]!;
+    expect(ttl).toBeLessThanOrEqual(3_600);
   });
 
   it('returns "none" for empty inputs without touching cache or fetch', async () => {
