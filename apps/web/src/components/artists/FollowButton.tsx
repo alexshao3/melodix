@@ -20,13 +20,21 @@ export function FollowButton({ artistId }: FollowButtonProps) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const t = typeof window !== 'undefined' ? localStorage.getItem('melodix.token') : null;
     setAuthed(Boolean(t));
     if (!t) return;
     api
       .followIds()
-      .then((ids) => setFollowing(ids.includes(artistId)))
-      .catch(() => setFollowing(false));
+      .then((ids) => {
+        if (!cancelled) setFollowing(ids.includes(artistId));
+      })
+      .catch(() => {
+        if (!cancelled) setFollowing(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [artistId]);
 
   if (authed === false) {
