@@ -19,7 +19,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - [ ] **Playlist editor UI** — rename, reorder, set cover, toggle public/private. Backend exists, UI doesn't.
 - [x] **Skeleton loaders** — `Skeleton`, `TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton` exported from `@melodix/ui`; per-route `loading.tsx` files for home, discover, library, album/artist/playlist details. _(shipped in #4)_
 - [x] **`prefers-reduced-motion` audit** — global CSS rule in `app/globals.css` collapses CSS animations & transitions; `MotionRoot` wraps both apps in `MotionConfig reducedMotion="user"` so framer-motion respects it too. _(shipped in #4)_
-- [ ] **Light-mode toggle on web** — match the Mini App's theme-sync flexibility. _(deferred to its own PR — needs `dark:` audit across every component before flipping the toggle)_
+- [x] **Light-mode toggle on web** — `next-themes` (`attribute="class"`, default `dark`); `ThemeProvider` wraps the layout, `ThemeToggle` (Sun/Moon) sits in the TopBar; light overrides live in `apps/web/src/app/globals.css` under `.light` selectors. _(closes H1; ADR-0009 documents the override approach.)_
 - [x] **First Jest test suite** — `apps/api/src/auth/auth.service.spec.ts` (12 tests covering password register/login + Telegram `initData` verification + `telegramLogin` upsert) and `apps/api/src/__shared-tests__/format.spec.ts` (6 tests covering `formatDuration` + `formatNumber`). Jest runs on real bcrypt, no mocks of crypto. _(shipped in #4)_
 - [x] **Pre-commit hook** — `husky@9` configured via `prepare` script; `.husky/pre-commit` runs `pnpm exec lint-staged`; `lint-staged` config in root `package.json` runs prettier on staged source files. ESLint integration is a follow-up. _(shipped in #4)_
 
@@ -61,6 +61,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - Wire artist links from track rows (`TrackCard` row variant → `/artists/:id`).
 - Album list from artist page (Mini App + web).
 - Surface artist/album cards in Mini App search (currently shows tracks only).
+- Migrate hardcoded `text-white` / `bg-white/X` / `bg-black/X` classes to semantic Tailwind tokens (`text-fg`, `bg-surface/X`, …) so the light-mode override block in `globals.css` can shrink.
 
 - Smart shuffle (avoid recently played, weight by likes).
 - "Daily mix" auto-playlists per genre.
