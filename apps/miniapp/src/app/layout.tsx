@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MotionRoot>
           <PlayerProvider>
             <TelegramSync />
-            <main className="mx-auto w-full max-w-xl px-4 pb-32 pt-4">{children}</main>
+            <main className="mx-auto w-full max-w-xl px-4 pb-52 pt-4">{children}</main>
             <MiniPlayer />
             <MiniNav />
           </PlayerProvider>
