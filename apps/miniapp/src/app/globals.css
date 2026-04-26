@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  /* Telegram WebApp injects these CSS variables; provide sensible defaults */
+  --tg-theme-bg-color: #0a0a0e;
+  --tg-theme-secondary-bg-color: #14141c;
+  --tg-theme-text-color: #ffffff;
+  --tg-theme-hint-color: #8a8a93;
+  --tg-theme-link-color: #22d3ee;
+  --tg-theme-button-color: #22d3ee;
+  --tg-theme-button-text-color: #000000;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body {
+  background: var(--tg-theme-bg-color);
+  color: var(--tg-theme-text-color);
+}
+
+body {
+  background-image:
+    radial-gradient(700px 500px at 80% -10%, rgba(217, 70, 239, 0.15), transparent 60%),
+    radial-gradient(500px 400px at -10% 10%, rgba(34, 211, 238, 0.15), transparent 60%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+@keyframes audiowave {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+.text-gradient {
+  background: linear-gradient(120deg, #67e8f9 0%, #d946ef 50%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
