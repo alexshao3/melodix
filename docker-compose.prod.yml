@@ -12,24 +12,24 @@
 
 services:
   # ── Infrastructure ─────────────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: melodix-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-melodix}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melodix}
-      POSTGRES_DB: ${POSTGRES_DB:-melodix}
-    volumes:
-      - melodix_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-melodix} -d ${POSTGRES_DB:-melodix}']
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    # Uncomment to expose Postgres externally (not needed when using Cloudflare Tunnel)
-    # ports:
-    #   - '5432:5432'
+  # Postgres disabled — using cloud database. Uncomment to use local Postgres.
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: melodix-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER:-melodix}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melodix}
+  #     POSTGRES_DB: ${POSTGRES_DB:-melodix}
+  #   volumes:
+  #     - melodix_postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-melodix} -d ${POSTGRES_DB:-melodix}']
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #   ports:
+  #     - '5432:5432'
 
   redis:
     image: redis:7-alpine
@@ -51,8 +51,6 @@ services:
     container_name: melodix-api
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
@@ -128,5 +126,5 @@ services:
       - miniapp
 
 volumes:
-  melodix_postgres_data:
+  # melodix_postgres_data:
   melodix_redis_data:
