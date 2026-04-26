@@ -21,7 +21,7 @@ export function MiniPlayer() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 220, damping: 28 }}
-          className="fixed inset-x-3 bottom-3 z-40 overflow-hidden rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-2xl"
+          className="fixed inset-x-3 bottom-[76px] z-30 overflow-hidden rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-2xl"
         >
           <div
             className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-rose-400 origin-left"

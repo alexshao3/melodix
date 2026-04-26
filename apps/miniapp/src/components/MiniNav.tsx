@@ -15,7 +15,7 @@ const ITEMS = [
 export function MiniNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-3 bottom-[88px] z-30 rounded-2xl border border-white/10 bg-black/70 px-2 py-1 backdrop-blur-xl">
+    <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-white/10 bg-black/70 px-2 py-1 backdrop-blur-xl">
       <div className="grid grid-cols-4">
         {ITEMS.map(({ href, label, icon: Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
