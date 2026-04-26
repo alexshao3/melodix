@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -35,12 +40,12 @@ export class AdminAuthService {
   }
 
   async createAdmin(username: string, password: string) {
+    const count = await this.prisma.adminUser.count();
+    if (count > 0) throw new ForbiddenException('Admin already set up');
+
     if (!username || !password) throw new BadRequestException('Missing fields');
     if (password.length < 6)
       throw new BadRequestException('Password must be at least 6 characters');
-
-    const existing = await this.prisma.adminUser.findUnique({ where: { username } });
-    if (existing) throw new BadRequestException('Admin already exists');
 
     const hash = await bcrypt.hash(password, 10);
     const admin = await this.prisma.adminUser.create({

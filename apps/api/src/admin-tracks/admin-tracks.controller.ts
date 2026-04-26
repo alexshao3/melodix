@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -16,7 +17,7 @@ import { AdminGuard } from '../admin-auth/admin.guard';
 import { AdminTracksService } from './admin-tracks.service';
 import { CreateTrackDto, UpdateTrackDto, ListTracksQueryDto } from './admin-tracks.dto';
 
-@Controller('api/admin/tracks')
+@Controller('admin/tracks')
 @UseGuards(AdminGuard)
 export class AdminTracksController {
   constructor(private readonly adminTracks: AdminTracksService) {}
@@ -34,7 +35,7 @@ export class AdminTracksController {
     files: { audio?: Express.Multer.File[]; cover?: Express.Multer.File[] },
   ) {
     const audioFile = files.audio?.[0];
-    if (!audioFile) throw new Error('Audio file is required');
+    if (!audioFile) throw new BadRequestException('Audio file is required');
     return this.adminTracks.create(dto, audioFile, files.cover?.[0]);
   }
 
