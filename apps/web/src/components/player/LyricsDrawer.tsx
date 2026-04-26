@@ -42,11 +42,19 @@ export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps
         if (res.lyrics) {
           setText(res.lyrics);
           setStatus('found');
+        } else if (res.source === 'none') {
+          // `safe()` collapses network/parse errors into the same shape
+          // as a real provider miss. The server tags transient failures
+          // with `source: 'none'` (provider 404 stays `'lyrics.ovh'`),
+          // which is what we use to surface the retry-able UI.
+          setStatus('error');
         } else {
           setStatus('missing');
         }
       })
       .catch(() => {
+        // Defensive: `api.lyrics()` is wrapped in `safe()` so it should
+        // never reject, but keep the branch in case the wrapper changes.
         if (cancelled) return;
         setStatus('error');
       });
