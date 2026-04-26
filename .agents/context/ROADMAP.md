@@ -52,7 +52,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - [ ] **A11y pass** — focus rings, ARIA roles on player controls, keyboard navigation parity with mouse.
 - [ ] **Bundle audit** — keep first-load JS on `/` under 200 KB gzipped.
 - [ ] **Sentry / OpenTelemetry** — error + perf telemetry across api/web/miniapp.
-- [ ] **Docker images** for `apps/api` and `apps/web` (multi-stage, non-root user) + `docker-compose.prod.yml` example.
+- [x] **Docker images** for `apps/api`, `apps/web`, and `apps/miniapp` (multi-stage, non-root user) + `docker-compose.prod.yml` with Cloudflare Tunnel. _(shipped in this PR; ADR-0019)_
 - [ ] **CONTRIBUTING.md** — onboard external contributors.
 
 ## Backlog (unsized ideas — promote into H1/H2/H3 when picked up)

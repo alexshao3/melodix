@@ -419,3 +419,11 @@ shipped empty in #6 and never gained production rows.
   The smoke specs share the same playwright install + browser cache,
   and splitting them would double the cache miss surface. Single job,
   single browser install, two spec files.
+
+## ADR-0019 · Docker Compose self-host with Cloudflare Tunnel
+
+**Date:** 2026-04-26
+**Status:** accepted
+**Context:** The project lacked any production deployment story. Self-hosting via Docker Compose with Cloudflare Tunnel is the simplest path — no cloud provider lock-in, no Kubernetes complexity, zero open ports on the host.
+**Decision:** Add per-app multi-stage Dockerfiles (`apps/{api,web,miniapp}/Dockerfile`) producing slim `node:22-alpine` images. A new `docker-compose.prod.yml` orchestrates `postgres`, `redis`, `api`, `web`, `miniapp`, and a `cloudflare/cloudflared` sidecar that exposes all services via a single tunnel token. Next.js apps use `output: 'standalone'` for minimal image size. `NEXT_PUBLIC_API_URL` is injected at build time via Docker build args. `.env.production.example` documents all required and optional vars. Database and Redis can be swapped for cloud providers (Supabase, Neon, Upstash, etc.) by changing the URL and removing the local container.
+**Consequences:** One-command deploy (`docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`). No ports exposed to the internet — Cloudflare handles TLS and DDoS protection. Cost: the `NEXT_PUBLIC_API_URL` is baked at build time, so changing the API domain requires a rebuild of the web/miniapp images. The `output: 'standalone'` setting is now always on, which changes the Next.js build output structure (adds `.next/standalone/`).
