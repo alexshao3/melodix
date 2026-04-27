@@ -71,22 +71,24 @@
 
 ### `apps/api/.env`
 
-| Var                    | Required                       | Used by                         | Notes                                                                                                       |
-| ---------------------- | ------------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`         | yes (for auth/playlists/likes) | Prisma                          | docker-compose default: `postgresql://melodix:melodix@localhost:5432/melodix?schema=public`                 |
-| `JWT_SECRET`           | yes                            | `auth/`                         | Any non-empty string in dev                                                                                 |
-| `JAMENDO_CLIENT_ID`    | no                             | `jamendo/`                      | Without it, the API serves `DEMO_TRACKS`                                                                    |
-| `REDIS_URL`            | no                             | `cache/`                        | E.g. `redis://localhost:6379`. When unset, the API runs without cache (every request hits upstream).        |
-| `TELEGRAM_BOT_TOKEN`   | no                             | `auth.service.ts:telegramLogin` | Required to verify Mini App `initData`                                                                      |
-| `CORS_ORIGIN`          | no                             | `main.ts`                       | Comma-separated allow-list; defaults to `*`                                                                 |
-| `S3_ENDPOINT`          | no                             | `storage/`                      | S3-compatible endpoint URL. Backblaze B2 default: `https://s3.us-west-004.backblazeb2.com`. Empty = AWS S3. |
-| `S3_REGION`            | no                             | `storage/`                      | Region. B2: `us-west-004` etc. Use `auto` for Cloudflare R2.                                                |
-| `S3_ACCESS_KEY_ID`     | no                             | `storage/`                      | Provider access key id (B2 keyID, R2 access key, AWS access key).                                           |
-| `S3_SECRET_ACCESS_KEY` | no                             | `storage/`                      | Provider secret (B2 applicationKey, R2 secret, AWS secret).                                                 |
-| `S3_BUCKET`            | no                             | `storage/`                      | Bucket name; defaults to `melodix`.                                                                         |
-| `S3_PUBLIC_URL`        | no                             | `storage/`                      | Public URL prefix for uploaded files. B2 public bucket: `https://f<cluster>.backblazeb2.com/file/<bucket>`. |
-| `S3_FORCE_PATH_STYLE`  | no                             | `storage/`                      | `'true'` to force path-style URLs (rarely needed). Default `false`.                                         |
-| `PORT`                 | no                             | `main.ts`                       | Defaults to `4000`                                                                                          |
+| Var                    | Required                             | Used by                                | Notes                                                                                                                                                |
+| ---------------------- | ------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`         | yes (for auth/playlists/likes)       | Prisma                                 | docker-compose default: `postgresql://melodix:melodix@localhost:5432/melodix?schema=public`                                                          |
+| `JWT_SECRET`           | yes                                  | `auth/`                                | Any non-empty string in dev                                                                                                                          |
+| `JAMENDO_CLIENT_ID`    | no                                   | `jamendo/`                             | Without it, the API serves `DEMO_TRACKS`                                                                                                             |
+| `REDIS_URL`            | no                                   | `cache/`                               | E.g. `redis://localhost:6379`. When unset, the API runs without cache (every request hits upstream).                                                 |
+| `TELEGRAM_BOT_TOKEN`   | no                                   | `auth.service.ts:telegramLogin`        | Required to verify Mini App `initData`                                                                                                               |
+| `CORS_ORIGIN`          | no                                   | `main.ts`                              | Comma-separated allow-list; defaults to `*`                                                                                                          |
+| `STORAGE_BACKEND`      | no                                   | `storage/storage.service.ts`           | `s3` (default) or `postgres`. Selects which `StorageBackend` is instantiated at boot. See ADR-0026.                                                  |
+| `S3_ENDPOINT`          | only when `STORAGE_BACKEND=s3`       | `storage/backends/s3.backend.ts`       | S3-compatible endpoint URL. Backblaze B2 default: `https://s3.us-west-004.backblazeb2.com`. Empty = AWS S3.                                          |
+| `S3_REGION`            | only when `STORAGE_BACKEND=s3`       | `storage/backends/s3.backend.ts`       | Region. B2: `us-west-004` etc. Use `auto` for Cloudflare R2.                                                                                         |
+| `S3_ACCESS_KEY_ID`     | only when `STORAGE_BACKEND=s3`       | `storage/backends/s3.backend.ts`       | Provider access key id (B2 keyID, R2 access key, AWS access key).                                                                                    |
+| `S3_SECRET_ACCESS_KEY` | only when `STORAGE_BACKEND=s3`       | `storage/backends/s3.backend.ts`       | Provider secret (B2 applicationKey, R2 secret, AWS secret).                                                                                          |
+| `S3_BUCKET`            | only when `STORAGE_BACKEND=s3`       | `storage/backends/s3.backend.ts`       | Bucket name; defaults to `melodix`.                                                                                                                  |
+| `S3_PUBLIC_URL`        | only when `STORAGE_BACKEND=s3`       | `storage/backends/s3.backend.ts`       | Public URL prefix for uploaded files. B2 public bucket: `https://f<cluster>.backblazeb2.com/file/<bucket>`.                                          |
+| `S3_FORCE_PATH_STYLE`  | no                                   | `storage/backends/s3.backend.ts`       | `'true'` to force path-style URLs (rarely needed). Default `false`.                                                                                  |
+| `API_PUBLIC_URL`       | only when `STORAGE_BACKEND=postgres` | `storage/backends/postgres.backend.ts` | Public base URL of the API. Upload URLs become `${API_PUBLIC_URL}/api/storage/<folder>/<filename>` and must be browser-fetchable from web + miniapp. |
+| `PORT`                 | no                                   | `main.ts`                              | Defaults to `4000`                                                                                                                                   |
 
 ### `apps/web/.env.local`
 

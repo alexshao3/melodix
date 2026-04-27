@@ -1,79 +1,56 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import * as crypto from 'node:crypto';
-import * as path from 'node:path';
+import { PrismaService } from '../prisma/prisma.service';
+import type { StorageBackend, StorageBackendName, StorageFolder } from './backends/storage.backend';
+import { S3StorageBackend } from './backends/s3.backend';
+import { PostgresStorageBackend } from './backends/postgres.backend';
 
 /**
- * S3-compatible object storage. Defaults are tuned for Backblaze B2
- * (free tier: 10 GB, no card required) but the same settings work for any
- * S3-compatible provider (Backblaze B2, Cloudflare R2, Storj, MinIO, AWS S3…).
+ * Thin facade over the active storage backend. Picks the implementation
+ * once at boot based on `STORAGE_BACKEND=s3|postgres` (default `s3`).
  *
- * Required env vars:
- *   S3_ENDPOINT             e.g. https://s3.us-west-004.backblazeb2.com
- *   S3_REGION               e.g. us-west-004 (use 'auto' for R2)
- *   S3_ACCESS_KEY_ID        provider key id
- *   S3_SECRET_ACCESS_KEY    provider secret
- *   S3_BUCKET               bucket name (default: melodix)
- *   S3_PUBLIC_URL           public base url for the bucket
- *                           e.g. https://f004.backblazeb2.com/file/<bucket>
+ * - `s3`: S3-compatible object storage. Defaults tuned for Backblaze B2;
+ *   works for any S3-compatible provider. See ADR-0025 and
+ *   `S3StorageBackend` for the env var list.
+ * - `postgres`: blobs stored as `bytea` in the existing Postgres database
+ *   and served via `GET /api/storage/<key>` with HTTP Range support.
+ *   See ADR-0026 and `PostgresStorageBackend`.
  *
- * Optional:
- *   S3_FORCE_PATH_STYLE     'true' to force path-style URLs (rarely needed)
+ * The interface (`upload` / `delete`) is identical across backends so the
+ * call sites in `AdminTracksService` don't care which one is active.
  */
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
-  private readonly s3: S3Client;
-  private readonly bucket: string;
-  private readonly publicUrl: string;
+  private readonly backend: StorageBackend;
 
-  constructor(private readonly config: ConfigService) {
-    const endpoint = this.config.get<string>('S3_ENDPOINT', '');
-    const region = this.config.get<string>('S3_REGION', 'auto');
-    const forcePathStyle =
-      this.config.get<string>('S3_FORCE_PATH_STYLE', 'false').toLowerCase() === 'true';
-
-    this.bucket = this.config.get<string>('S3_BUCKET', 'melodix');
-    this.publicUrl = this.config.get<string>('S3_PUBLIC_URL', '');
-
-    this.s3 = new S3Client({
-      region,
-      endpoint: endpoint || undefined,
-      forcePathStyle,
-      credentials: {
-        accessKeyId: this.config.get<string>('S3_ACCESS_KEY_ID', ''),
-        secretAccessKey: this.config.get<string>('S3_SECRET_ACCESS_KEY', ''),
-      },
-    });
+  constructor(
+    private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
+    const requested = (this.config.get<string>('STORAGE_BACKEND', 's3') || 's3').toLowerCase();
+    if (requested === 'postgres') {
+      this.backend = new PostgresStorageBackend(this.prisma, this.config, this.logger);
+    } else {
+      this.backend = new S3StorageBackend(this.config, this.logger);
+    }
+    this.logger.log(`Storage backend: ${this.backend.name}`);
   }
 
-  async upload(
+  get backendName(): StorageBackendName {
+    return this.backend.name;
+  }
+
+  upload(
     file: Buffer,
     originalName: string,
     contentType: string,
-    folder: 'tracks' | 'covers',
+    folder: StorageFolder,
   ): Promise<string> {
-    const ext = path.extname(originalName) || (folder === 'tracks' ? '.mp3' : '.jpg');
-    const key = `${folder}/${crypto.randomUUID()}${ext}`;
-
-    await this.s3.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: file,
-        ContentType: contentType,
-      }),
-    );
-
-    const url = this.publicUrl ? `${this.publicUrl}/${key}` : key;
-    this.logger.log(`Uploaded ${key} (${file.length} bytes)`);
-    return url;
+    return this.backend.upload(file, originalName, contentType, folder);
   }
 
-  async delete(url: string): Promise<void> {
-    const key = this.publicUrl ? url.replace(`${this.publicUrl}/`, '') : url;
-    await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
-    this.logger.log(`Deleted ${key}`);
+  delete(url: string): Promise<void> {
+    return this.backend.delete(url);
   }
 }
