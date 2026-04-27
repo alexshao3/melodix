@@ -56,9 +56,11 @@ export function EditablePlaylistTracks({
     setBusy(track.id);
     try {
       await api.removePlaylistTrack(playlistId, track.id);
-      const next = tracks.filter((t) => t.id !== track.id);
-      setTracks(next);
-      setPersisted(next);
+      // Functional updates so an in-flight drag-reorder that resolves
+      // between the API call and these setters doesn't get clobbered
+      // by a stale closure capture of `tracks`.
+      setTracks((prev) => prev.filter((t) => t.id !== track.id));
+      setPersisted((prev) => prev.filter((t) => t.id !== track.id));
       startTransition(() => router.refresh());
     } finally {
       setBusy(null);
