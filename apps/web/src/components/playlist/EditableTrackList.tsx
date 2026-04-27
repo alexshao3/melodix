@@ -70,7 +70,12 @@ export function EditableTrackList({ playlistId, tracks: initial }: EditableTrack
     setBusy(track.id);
     try {
       await api.removePlaylistTrack(playlistId, track.id);
-      setTracks((prev) => prev.filter((t) => t.id !== track.id));
+      const next = tracks.filter((t) => t.id !== track.id);
+      setTracks(next);
+      // Keep `persisted` in sync with the server — otherwise a subsequent
+      // failed reorder would roll the UI back to a snapshot that still
+      // contains the deleted track.
+      setPersisted(next);
       startTransition(() => router.refresh());
     } finally {
       setBusy(null);
