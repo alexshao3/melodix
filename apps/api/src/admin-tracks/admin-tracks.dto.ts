@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  Min,
+  IsArray,
+  ArrayNotEmpty,
+  ArrayMaxSize,
+  ValidateIf,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateTrackDto {
@@ -72,4 +81,35 @@ export class ListTracksQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+}
+
+/**
+ * Bulk operations cap at 200 ids per request — picked to comfortably
+ * cover a "select-all on page 20-rows" flow with headroom, while keeping
+ * a single batch under Postgres / R2 round-trip latency budgets.
+ */
+const BULK_MAX = 200;
+
+export class BulkDeleteDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(BULK_MAX)
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class BulkGenreDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(BULK_MAX)
+  @IsString({ each: true })
+  ids!: string[];
+
+  /**
+   * `null` clears the genre. Passed as a regular field (not undefined) so
+   * the action is intentional.
+   */
+  @ValidateIf((_o, v) => v !== null)
+  @IsString()
+  genre!: string | null;
 }

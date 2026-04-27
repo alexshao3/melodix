@@ -111,6 +111,16 @@ export const adminApi = {
     request<void>(`/api/admin/tracks/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }),
+  bulkDeleteTracks: (ids: string[]) =>
+    request<{ deleted: string[]; notFound: string[] }>(`/api/admin/tracks/bulk-delete`, {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
+  bulkSetTrackGenre: (ids: string[], genre: string | null) =>
+    request<{ updated: string[]; notFound: string[] }>(`/api/admin/tracks/bulk-genre`, {
+      method: 'PATCH',
+      body: JSON.stringify({ ids, genre }),
+    }),
 
   listSources: () => request<MusicSource[]>('/api/admin/sources'),
   toggleSource: (name: string, enabled: boolean) =>

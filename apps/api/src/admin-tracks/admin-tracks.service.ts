@@ -167,6 +167,70 @@ export class AdminTracksService {
     await this.prisma.track.delete({ where: { id } });
   }
 
+  /**
+   * Best-effort bulk delete. Non-existent ids and non-upload tracks are
+   * reported back as `notFound` rather than throwing; R2 delete failures
+   * are swallowed (as in `remove()`) so a single bad object never blocks
+   * the whole batch. Returns the partition so the UI can surface a
+   * partial-success toast.
+   */
+  async bulkRemove(ids: string[]): Promise<{ deleted: string[]; notFound: string[] }> {
+    if (ids.length === 0) return { deleted: [], notFound: [] };
+    const unique = Array.from(new Set(ids));
+
+    const found = await this.prisma.track.findMany({
+      where: { id: { in: unique }, source: 'upload' },
+      select: { id: true, audioUrl: true, cover: true },
+    });
+    const foundSet = new Set(found.map((t) => t.id));
+    const notFound = unique.filter((id) => !foundSet.has(id));
+
+    await Promise.all(
+      found.flatMap((t) => {
+        const ops = [this.storage.delete(t.audioUrl).catch(() => undefined)];
+        if (t.cover) ops.push(this.storage.delete(t.cover).catch(() => undefined));
+        return ops;
+      }),
+    );
+
+    if (found.length > 0) {
+      await this.prisma.track.deleteMany({
+        where: { id: { in: found.map((t) => t.id) }, source: 'upload' },
+      });
+    }
+
+    return { deleted: found.map((t) => t.id), notFound };
+  }
+
+  /**
+   * Bulk-set the genre on uploaded tracks. `genre === null` clears it.
+   * Skips non-upload tracks silently — they're filtered out in the
+   * `where` clause and reported as `notFound`.
+   */
+  async bulkSetGenre(
+    ids: string[],
+    genre: string | null,
+  ): Promise<{ updated: string[]; notFound: string[] }> {
+    if (ids.length === 0) return { updated: [], notFound: [] };
+    const unique = Array.from(new Set(ids));
+
+    const found = await this.prisma.track.findMany({
+      where: { id: { in: unique }, source: 'upload' },
+      select: { id: true },
+    });
+    const foundSet = new Set(found.map((t) => t.id));
+    const notFound = unique.filter((id) => !foundSet.has(id));
+
+    if (found.length > 0) {
+      await this.prisma.track.updateMany({
+        where: { id: { in: found.map((t) => t.id) }, source: 'upload' },
+        data: { genre },
+      });
+    }
+
+    return { updated: found.map((t) => t.id), notFound };
+  }
+
   private toTrack(t: {
     id: string;
     title: string;
