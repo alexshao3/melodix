@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mic2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { useState } from 'react';
 import { formatDuration } from '@melodix/shared';
+import { Waveform } from '@melodix/ui';
 import { LyricsSheet } from './LyricsSheet';
 import { usePlayer } from './PlayerProvider';
 
@@ -78,15 +79,26 @@ export function MiniPlayer() {
             </div>
           </div>
           <div className="px-3 pb-2">
-            <input
-              type="range"
-              min={0}
-              max={safeDuration || 1}
-              step={0.1}
-              value={position}
-              onChange={(e) => seek(parseFloat(e.target.value))}
-              className="w-full accent-cyan-400"
-            />
+            {currentTrack.peaks && currentTrack.peaks.length > 0 ? (
+              <Waveform
+                peaks={currentTrack.peaks}
+                position={position}
+                duration={safeDuration}
+                onSeek={(s) => seek(s)}
+                height={28}
+                className="text-cyan-400"
+              />
+            ) : (
+              <input
+                type="range"
+                min={0}
+                max={safeDuration || 1}
+                step={0.1}
+                value={position}
+                onChange={(e) => seek(parseFloat(e.target.value))}
+                className="w-full accent-cyan-400"
+              />
+            )}
             <div className="flex items-center justify-between text-[10px] tabular-nums text-zinc-500">
               <span>{formatDuration(position)}</span>
               <span>{formatDuration(safeDuration)}</span>

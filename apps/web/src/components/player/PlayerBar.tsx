@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatDuration } from '@melodix/shared';
+import { Waveform } from '@melodix/ui';
 import { cn } from '@/lib/cn';
 import { LyricsDrawer } from './LyricsDrawer';
 import { usePlayer } from './PlayerProvider';
@@ -153,29 +154,47 @@ export function PlayerBar() {
                 </button>
               </div>
 
-              {/* Scrubber */}
+              {/* Scrubber. When the track ships pre-computed waveform peaks
+                  (uploaded tracks), render the Waveform scrubber. Otherwise
+                  fall back to the plain range input — Jamendo / demo tracks
+                  have no peaks today. */}
               <div className="hidden w-full items-center gap-3 px-2 sm:flex">
                 <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-zinc-500">
                   {formatDuration(display)}
                 </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={safeDuration || 1}
-                  step={0.1}
-                  value={display}
-                  onChange={(e) => setScrubValue(parseFloat(e.target.value))}
-                  onMouseUp={() => {
-                    if (scrubValue !== null) seek(scrubValue);
-                    setScrubValue(null);
-                  }}
-                  onTouchEnd={() => {
-                    if (scrubValue !== null) seek(scrubValue);
-                    setScrubValue(null);
-                  }}
-                  style={{ ['--progress' as string]: `${pct}%` }}
-                  className="player-range w-full"
-                />
+                {currentTrack.peaks && currentTrack.peaks.length > 0 ? (
+                  <Waveform
+                    peaks={currentTrack.peaks}
+                    position={display}
+                    duration={safeDuration}
+                    onScrub={(s) => setScrubValue(s)}
+                    onSeek={(s) => {
+                      seek(s);
+                      setScrubValue(null);
+                    }}
+                    height={36}
+                    className="text-fuchsia-400"
+                  />
+                ) : (
+                  <input
+                    type="range"
+                    min={0}
+                    max={safeDuration || 1}
+                    step={0.1}
+                    value={display}
+                    onChange={(e) => setScrubValue(parseFloat(e.target.value))}
+                    onMouseUp={() => {
+                      if (scrubValue !== null) seek(scrubValue);
+                      setScrubValue(null);
+                    }}
+                    onTouchEnd={() => {
+                      if (scrubValue !== null) seek(scrubValue);
+                      setScrubValue(null);
+                    }}
+                    style={{ ['--progress' as string]: `${pct}%` }}
+                    className="player-range w-full"
+                  />
+                )}
                 <span className="w-10 shrink-0 text-left text-[11px] tabular-nums text-zinc-500">
                   {formatDuration(safeDuration)}
                 </span>

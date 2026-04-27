@@ -36,6 +36,13 @@ export interface Track {
   source: 'jamendo' | 'upload' | 'fma' | 'demo';
   externalId?: string | null;
   liked?: boolean;
+  /**
+   * Pre-computed waveform amplitude samples in [0, 1]. ~200 buckets per
+   * track. Only populated for `source: 'upload'` tracks today (generated
+   * client-side at upload time via `OfflineAudioContext`). Players fall
+   * back to a plain progress bar when this is `null` / missing.
+   */
+  peaks?: number[] | null;
 }
 
 export interface Playlist {

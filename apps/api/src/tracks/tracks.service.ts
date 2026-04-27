@@ -3,6 +3,7 @@ import type { Track } from '@melodix/shared';
 import { JamendoService } from '../jamendo/jamendo.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MusicSourcesService } from '../music-sources/music-sources.service';
+import { normalizePeaks } from './peaks.util';
 
 @Injectable()
 export class TracksService {
@@ -125,6 +126,7 @@ export class TracksService {
     source: string;
     artistId: string;
     albumId: string | null;
+    peaks: unknown;
     artist: { name: string };
   }): Track {
     return {
@@ -141,6 +143,7 @@ export class TracksService {
       artistName: t.artist.name,
       albumId: t.albumId,
       albumName: null,
+      peaks: normalizePeaks(t.peaks),
     };
   }
 }
