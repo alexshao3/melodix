@@ -151,14 +151,21 @@ export class AdminTracksService {
 
     // Updating lyrics invalidates any previous alignment — the timestamps
     // would no longer line up. Admin must re-trigger /auto-sync explicitly.
+    // The admin form re-sends the existing lyrics on every save (e.g. when
+    // only the title changed), so we compare against the persisted value
+    // and only wipe the LRC when the lyrics text actually changed —
+    // otherwise a 30-second alignment would be silently destroyed by an
+    // unrelated edit.
     let lyricsPatch: { lyrics?: string | null; syncedLyrics?: null; lyricsAlignedAt?: null } = {};
     if (data.lyrics !== undefined) {
-      const next = normalizeLyrics(data.lyrics);
-      lyricsPatch = {
-        lyrics: next ?? null,
-        syncedLyrics: null,
-        lyricsAlignedAt: null,
-      };
+      const next = normalizeLyrics(data.lyrics) ?? null;
+      if (next !== (existing.lyrics ?? null)) {
+        lyricsPatch = {
+          lyrics: next,
+          syncedLyrics: null,
+          lyricsAlignedAt: null,
+        };
+      }
     }
 
     const track = await this.prisma.track.update({
