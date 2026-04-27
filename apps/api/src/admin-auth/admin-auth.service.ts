@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -39,13 +44,29 @@ export class AdminAuthService {
     if (password.length < 6)
       throw new BadRequestException('Password must be at least 6 characters');
 
-    const existing = await this.prisma.adminUser.findUnique({ where: { username } });
-    if (existing) throw new BadRequestException('Admin already exists');
-
     const hash = await bcrypt.hash(password, 10);
-    const admin = await this.prisma.adminUser.create({
-      data: { username, password: hash },
-    });
-    return { id: admin.id, username: admin.username };
+
+    try {
+      const admin = await this.prisma.$transaction(
+        async (tx) => {
+          const count = await tx.adminUser.count();
+          if (count > 0) throw new ForbiddenException('Admin already set up');
+          return tx.adminUser.create({ data: { username, password: hash } });
+        },
+        { isolationLevel: 'Serializable' },
+      );
+      return { id: admin.id, username: admin.username };
+    } catch (err) {
+      if (err instanceof ForbiddenException) throw err;
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        (err as { code: string }).code === 'P2002'
+      ) {
+        throw new ForbiddenException('Admin already set up');
+      }
+      throw err;
+    }
   }
 }

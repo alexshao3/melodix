@@ -3,7 +3,7 @@ import { AdminGuard } from '../admin-auth/admin.guard';
 import { MusicSourcesService } from './music-sources.service';
 import { ToggleSourceDto } from './music-sources.dto';
 
-@Controller('api/admin/sources')
+@Controller('admin/sources')
 @UseGuards(AdminGuard)
 export class MusicSourcesController {
   constructor(private readonly sources: MusicSourcesService) {}

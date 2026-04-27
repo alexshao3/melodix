@@ -1,10 +1,10 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { SkipThrottle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminLoginDto, CreateAdminDto } from './admin-auth.dto';
 
-@Controller('api/admin/auth')
-@SkipThrottle()
+@Controller('admin/auth')
+@Throttle({ auth: { limit: 10, ttl: 60_000 } })
 export class AdminAuthController {
   constructor(private readonly adminAuth: AdminAuthService) {}
 
