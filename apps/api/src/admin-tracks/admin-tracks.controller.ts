@@ -15,7 +15,13 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AdminGuard } from '../admin-auth/admin.guard';
 import { AdminTracksService } from './admin-tracks.service';
-import { CreateTrackDto, UpdateTrackDto, ListTracksQueryDto } from './admin-tracks.dto';
+import {
+  CreateTrackDto,
+  UpdateTrackDto,
+  ListTracksQueryDto,
+  BulkDeleteDto,
+  BulkGenreDto,
+} from './admin-tracks.dto';
 import { normalizePeaks } from '../tracks/peaks.util';
 
 @Controller('admin/tracks')
@@ -72,6 +78,22 @@ export class AdminTracksController {
   @Get()
   list(@Query() query: ListTracksQueryDto) {
     return this.adminTracks.list(query);
+  }
+
+  // Bulk routes MUST be declared before the `:id` parameterized routes —
+  // NestJS matches in declaration order, so `@Patch(':id')` would
+  // otherwise swallow `/bulk-genre` as `id="bulk-genre"`.
+  // POST (not DELETE) for bulk delete because we ship a JSON body and
+  // DELETE-with-body is inconsistently handled across proxies and CDNs
+  // (Cloudflare strips request bodies on DELETE).
+  @Post('bulk-delete')
+  bulkRemove(@Body() dto: BulkDeleteDto) {
+    return this.adminTracks.bulkRemove(dto.ids);
+  }
+
+  @Patch('bulk-genre')
+  bulkGenre(@Body() dto: BulkGenreDto) {
+    return this.adminTracks.bulkSetGenre(dto.ids, dto.genre);
   }
 
   @Patch(':id')

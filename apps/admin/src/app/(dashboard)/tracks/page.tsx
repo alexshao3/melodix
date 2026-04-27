@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search,
   Pencil,
@@ -11,9 +11,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Layers,
+  X,
+  Tag,
 } from 'lucide-react';
 import { Spinner } from '@melodix/ui';
-import type { Track } from '@melodix/shared';
+import { GENRES, type Track } from '@melodix/shared';
 import { adminApi, ApiError, type AdminTracksList } from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
@@ -39,14 +41,38 @@ export default function TracksPage() {
   const [deleting, setDeleting] = useState<Track | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
 
-  // debounce search → page reset
+  // Bulk-selection state. Tracks are identified by id; the set persists
+  // across page navigation (not the search), so a long cleanup queue
+  // can be staged across multiple pages.
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [genreMenuOpen, setGenreMenuOpen] = useState(false);
+  const genreMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // debounce search → page reset, and clear any in-flight selection so
+  // the user doesn't accidentally bulk-edit results they can no longer
+  // see in the filtered list.
   useEffect(() => {
     const id = setTimeout(() => {
       setDebouncedSearch(search.trim());
       setPage(1);
+      setSelected(new Set());
     }, 250);
     return () => clearTimeout(id);
   }, [search]);
+
+  // Close the genre menu on outside-click.
+  useEffect(() => {
+    if (!genreMenuOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (genreMenuRef.current && !genreMenuRef.current.contains(e.target as Node)) {
+        setGenreMenuOpen(false);
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [genreMenuOpen]);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -83,6 +109,85 @@ export default function TracksPage() {
       curr ? { ...curr, items: curr.items.map((t) => (t.id === updated.id ? updated : t)) } : curr,
     );
     setEditing(null);
+  };
+
+  const visibleIds = useMemo(() => data?.items.map((t) => t.id) ?? [], [data]);
+  const visibleSelectedCount = useMemo(
+    () => visibleIds.filter((id) => selected.has(id)).length,
+    [visibleIds, selected],
+  );
+  const allVisibleSelected = visibleIds.length > 0 && visibleSelectedCount === visibleIds.length;
+  const someVisibleSelected = visibleSelectedCount > 0 && !allVisibleSelected;
+
+  const toggleOne = (id: string) =>
+    setSelected((curr) => {
+      const next = new Set(curr);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const togglePage = () =>
+    setSelected((curr) => {
+      const next = new Set(curr);
+      if (allVisibleSelected) visibleIds.forEach((id) => next.delete(id));
+      else visibleIds.forEach((id) => next.add(id));
+      return next;
+    });
+
+  const clearSelection = () => setSelected(new Set());
+
+  const runBulkDelete = async () => {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const ids = Array.from(selected);
+      const result = await adminApi.bulkDeleteTracks(ids);
+      if (result.notFound.length === 0) {
+        toast.success(
+          `Deleted ${result.deleted.length} track${result.deleted.length === 1 ? '' : 's'}.`,
+        );
+      } else if (result.deleted.length === 0) {
+        toast.error(`Could not delete any of the ${result.notFound.length} selected tracks.`);
+      } else {
+        toast.success(
+          `Deleted ${result.deleted.length}; skipped ${result.notFound.length} (not found or not an upload).`,
+        );
+      }
+      setBulkDeleteOpen(false);
+      clearSelection();
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Bulk delete failed');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const runBulkGenre = async (genre: string | null) => {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const ids = Array.from(selected);
+      const result = await adminApi.bulkSetTrackGenre(ids, genre);
+      const label = genre ?? '\u201c\u2014\u201d (cleared)';
+      if (result.notFound.length === 0) {
+        toast.success(
+          `Set genre to ${label} on ${result.updated.length} track${result.updated.length === 1 ? '' : 's'}.`,
+        );
+      } else if (result.updated.length === 0) {
+        toast.error(`No tracks updated (${result.notFound.length} skipped).`);
+      } else {
+        toast.success(`Updated ${result.updated.length}; skipped ${result.notFound.length}.`);
+      }
+      setGenreMenuOpen(false);
+      clearSelection();
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Bulk genre update failed');
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   const confirmDelete = async () => {
@@ -141,6 +246,27 @@ export default function TracksPage() {
             {data ? `${data.total} track${data.total === 1 ? '' : 's'}` : '—'}
           </p>
         </div>
+        {visibleIds.length > 0 && (
+          <div className="mt-3 flex items-center gap-2 border-t border-white/5 pt-3 text-xs text-zinc-400">
+            <input
+              type="checkbox"
+              aria-label={
+                allVisibleSelected ? 'Deselect all on this page' : 'Select all on this page'
+              }
+              checked={allVisibleSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someVisibleSelected;
+              }}
+              onChange={togglePage}
+              className="h-4 w-4 rounded border-white/30 bg-white/5 accent-fuchsia-500"
+            />
+            <span>
+              {selected.size === 0
+                ? 'Select tracks to act on them in bulk.'
+                : `${selected.size} selected${selected.size > visibleIds.length ? ' (across pages)' : ''}.`}
+            </span>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -159,8 +285,17 @@ export default function TracksPage() {
             {data.items.map((track) => (
               <li
                 key={track.id}
-                className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.02] sm:px-6"
+                className={`flex items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.02] sm:px-6 ${
+                  selected.has(track.id) ? 'bg-fuchsia-500/[0.06]' : ''
+                }`}
               >
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${track.title}`}
+                  checked={selected.has(track.id)}
+                  onChange={() => toggleOne(track.id)}
+                  className="h-4 w-4 shrink-0 rounded border-white/30 bg-white/5 accent-fuchsia-500"
+                />
                 <Cover cover={track.cover ?? null} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-white">{track.title}</p>
@@ -259,6 +394,84 @@ export default function TracksPage() {
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
       />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selected.size} track${selected.size === 1 ? '' : 's'}?`}
+        description={`The selected upload${selected.size === 1 ? '' : 's'} will be permanently removed from the catalog and from R2 storage. This cannot be undone.`}
+        confirmLabel={`Delete ${selected.size}`}
+        destructive
+        busy={bulkBusy}
+        onConfirm={runBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+      />
+
+      {/* Floating bulk-action bar — only visible when there's a selection. */}
+      {selected.size > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-white/15 bg-zinc-900/90 px-3 py-2 text-sm text-white shadow-2xl backdrop-blur-xl">
+            <span className="px-2 text-xs text-zinc-300">{selected.size} selected</span>
+
+            <div ref={genreMenuRef} className="relative">
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => setGenreMenuOpen((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs hover:bg-white/10 disabled:opacity-50"
+              >
+                <Tag className="h-3.5 w-3.5" />
+                Set genre…
+              </button>
+              {genreMenuOpen && (
+                <div className="absolute bottom-full left-0 mb-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-900/95 shadow-2xl backdrop-blur-xl">
+                  <ul className="max-h-64 overflow-y-auto py-1 text-xs">
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => runBulkGenre(null)}
+                        className="block w-full px-3 py-1.5 text-left text-zinc-400 hover:bg-white/10 hover:text-white"
+                      >
+                        — Clear genre
+                      </button>
+                    </li>
+                    {GENRES.map((g) => (
+                      <li key={g.id}>
+                        <button
+                          type="button"
+                          onClick={() => runBulkGenre(g.id)}
+                          className="block w-full px-3 py-1.5 text-left text-zinc-200 hover:bg-white/10 hover:text-white"
+                        >
+                          {g.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={() => setBulkDeleteOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-400/30 bg-rose-500/15 px-3 py-1.5 text-xs text-rose-100 hover:bg-rose-500/25 disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </button>
+
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={clearSelection}
+              aria-label="Clear selection"
+              className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white disabled:opacity-50"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
