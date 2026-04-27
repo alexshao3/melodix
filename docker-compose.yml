@@ -108,6 +108,24 @@ services:
     # ports:
     #   - '3001:3001'
 
+  # ── Admin (Next.js admin dashboard) ────────────────────────────────
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4000}
+    container_name: melodix-admin
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      HOSTNAME: '0.0.0.0'
+      PORT: '3002'
+    # Uncomment to expose admin externally for debugging
+    # ports:
+    #   - '3002:3002'
+
   # ── Cloudflare Tunnel ──────────────────────────────────────────────
   # Exposes your services to the internet without opening ports.
   #
@@ -115,9 +133,10 @@ services:
   #   1. Go to https://one.dash.cloudflare.com → Networks → Tunnels
   #   2. Create a tunnel, copy the tunnel token
   #   3. Add public hostnames pointing to the internal services:
-  #      - melodix.yourdomain.com    → http://web:3000
-  #      - api.melodix.yourdomain.com → http://api:4000
-  #      - app.melodix.yourdomain.com → http://miniapp:3001
+  #      - melodix.yourdomain.com       → http://web:3000
+  #      - api.melodix.yourdomain.com   → http://api:4000
+  #      - app.melodix.yourdomain.com   → http://miniapp:3001
+  #      - admin.melodix.yourdomain.com → http://admin:3002
   #   4. Set CLOUDFLARE_TUNNEL_TOKEN in .env.production
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -130,6 +149,7 @@ services:
       - web
       - api
       - miniapp
+      - admin
 
 # volumes:
 #   melodix_postgres_data:

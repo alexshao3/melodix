@@ -62,6 +62,7 @@
 | ------------------------- | ---- | ------------------------------------------------------------------- |
 | Web                       | 3000 | http://localhost:3000                                               |
 | Mini App                  | 3001 | http://localhost:3001                                               |
+| Admin dashboard           | 3002 | http://localhost:3002 (Phase 2; ADR-0021)                           |
 | API                       | 4000 | http://localhost:4000/api                                           |
 | Postgres (docker-compose) | 5432 | `postgresql://melodix:melodix@localhost:5432/melodix`               |
 | Redis (docker-compose)    | 6379 | `redis://localhost:6379` (Jamendo cache, lyrics cache, future jobs) |
@@ -96,6 +97,12 @@
 | Var                   | Notes          |
 | --------------------- | -------------- |
 | `NEXT_PUBLIC_API_URL` | Same as above. |
+
+### `apps/admin/.env.local`
+
+| Var                   | Notes                                                            |
+| --------------------- | ---------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Same as above. Admin client calls `/api/admin/*` on this origin. |
 
 ### Runner / E2E (shell-level only — NOT loaded from any `.env` file)
 
@@ -134,9 +141,10 @@ pnpm --filter @melodix/api prisma:migrate          # dev migration
 pnpm --filter @melodix/api prisma:deploy           # CI / prod
 pnpm --filter @melodix/api prisma:seed
 
-# Web / Mini App
+# Web / Mini App / Admin
 pnpm --filter @melodix/web dev
 pnpm --filter @melodix/miniapp dev
+pnpm --filter @melodix/admin dev                   # → http://localhost:3002
 ```
 
 ## CI
@@ -172,6 +180,7 @@ Per-app Dockerfiles produce optimised production images:
 | `apps/api/Dockerfile`     | node:22-alpine | Multi-stage. Runs `prisma migrate deploy` on startup, then `node dist/…/main.js`.     |
 | `apps/web/Dockerfile`     | node:22-alpine | Multi-stage. Next.js `output: 'standalone'`. `NEXT_PUBLIC_API_URL` set via build arg. |
 | `apps/miniapp/Dockerfile` | node:22-alpine | Same pattern as web.                                                                  |
+| `apps/admin/Dockerfile`   | node:22-alpine | Same pattern as web. Exposes port `3002`. ADR-0021.                                   |
 
 `docker-compose.yml` orchestrates all services + a Cloudflare Tunnel sidecar:
 
@@ -181,7 +190,7 @@ cp .env.production.example .env.production   # edit values
 docker compose --env-file .env.production up -d --build
 ```
 
-Services: `api`, `web`, `miniapp`, `cloudflared` (active). `postgres` and `redis` are
+Services: `api`, `web`, `miniapp`, `admin`, `cloudflared` (active). `postgres` and `redis` are
 commented out — currently using cloud providers. Uncomment to run locally.
 
 Database and Redis can be swapped for cloud providers (Supabase, Neon, Upstash, etc.)
