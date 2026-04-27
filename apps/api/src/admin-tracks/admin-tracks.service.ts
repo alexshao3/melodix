@@ -3,12 +3,14 @@ import type { Track } from '@melodix/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { normalizePeaks } from '../tracks/peaks.util';
+import { LyricsAlignerService } from './lyrics-aligner.service';
 
 @Injectable()
 export class AdminTracksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly aligner: LyricsAlignerService,
   ) {}
 
   async create(
@@ -19,6 +21,7 @@ export class AdminTracksService {
       genre?: string;
       duration?: number;
       peaks?: number[];
+      lyrics?: string;
     },
     audioFile: Express.Multer.File,
     coverFile?: Express.Multer.File,
@@ -62,6 +65,7 @@ export class AdminTracksService {
         artistId: artist.id,
         // Stored as JSONB; we re-validate on read in `normalizePeaks`.
         peaks: data.peaks && data.peaks.length > 0 ? data.peaks : undefined,
+        lyrics: normalizeLyrics(data.lyrics),
       },
       include: { artist: true },
     });
@@ -102,7 +106,13 @@ export class AdminTracksService {
 
   async update(
     id: string,
-    data: { title?: string; artistName?: string; albumName?: string; genre?: string },
+    data: {
+      title?: string;
+      artistName?: string;
+      albumName?: string;
+      genre?: string;
+      lyrics?: string;
+    },
     coverFile?: Express.Multer.File,
   ): Promise<Track> {
     const existing = await this.prisma.track.findUnique({
@@ -139,17 +149,73 @@ export class AdminTracksService {
       artistId = artist.id;
     }
 
+    // Updating lyrics invalidates any previous alignment — the timestamps
+    // would no longer line up. Admin must re-trigger /auto-sync explicitly.
+    let lyricsPatch: { lyrics?: string | null; syncedLyrics?: null; lyricsAlignedAt?: null } = {};
+    if (data.lyrics !== undefined) {
+      const next = normalizeLyrics(data.lyrics);
+      lyricsPatch = {
+        lyrics: next ?? null,
+        syncedLyrics: null,
+        lyricsAlignedAt: null,
+      };
+    }
+
     const track = await this.prisma.track.update({
       where: { id },
       data: {
         ...(data.title && { title: data.title }),
         ...(data.genre !== undefined && { genre: data.genre }),
         ...(cover !== undefined && { cover }),
+        ...lyricsPatch,
         artistId,
       },
       include: { artist: true },
     });
 
+    return this.toTrack(track);
+  }
+
+  /**
+   * Run forced alignment via the Aeneas sidecar and persist the resulting
+   * LRC on the Track row. The optional `lyricsOverride` lets the admin
+   * fix typos at the same time as triggering alignment without a separate
+   * save round-trip; if omitted, the row's existing `lyrics` is used.
+   */
+  async autoSyncLyrics(
+    id: string,
+    opts: { language?: string; lyricsOverride?: string },
+  ): Promise<Track> {
+    const existing = await this.prisma.track.findUnique({
+      where: { id },
+      include: { artist: true },
+    });
+    if (!existing || existing.source !== 'upload') {
+      throw new NotFoundException('Uploaded track not found');
+    }
+
+    const rawLyrics = normalizeLyrics(opts.lyricsOverride) ?? existing.lyrics ?? '';
+    if (!rawLyrics.trim()) {
+      throw new BadRequestException(
+        'Track has no lyrics to align. Save plain-text lyrics first or pass `lyrics` in the request body.',
+      );
+    }
+
+    const result = await this.aligner.align({
+      audioUrl: existing.audioUrl,
+      lyrics: rawLyrics,
+      language: opts.language,
+    });
+
+    const track = await this.prisma.track.update({
+      where: { id },
+      data: {
+        lyrics: rawLyrics,
+        syncedLyrics: result.lrc,
+        lyricsAlignedAt: new Date(),
+      },
+      include: { artist: true },
+    });
     return this.toTrack(track);
   }
 
@@ -244,6 +310,8 @@ export class AdminTracksService {
     artistId: string;
     albumId: string | null;
     peaks: unknown;
+    lyrics: string | null;
+    syncedLyrics: string | null;
     artist: { name: string };
   }): Track {
     return {
@@ -261,6 +329,27 @@ export class AdminTracksService {
       albumId: t.albumId,
       albumName: null,
       peaks: normalizePeaks(t.peaks),
+      lyrics: t.lyrics,
+      syncedLyrics: t.syncedLyrics,
     };
   }
+}
+
+/**
+ * Normalize lyrics for storage: collapse `\r\n` → `\n`, trim trailing
+ * whitespace per line, strip leading/trailing blank lines. Empty input
+ * (and an explicit empty string from the admin "clear" affordance) maps
+ * to `undefined` so the Prisma `data` patch becomes a no-op rather than
+ * blanking the column unintentionally.
+ */
+function normalizeLyrics(raw: string | undefined): string | undefined {
+  if (raw === undefined) return undefined;
+  const cleaned = raw
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/\s+$/u, ''))
+    .join('\n')
+    .replace(/^\n+/, '')
+    .replace(/\n+$/, '');
+  return cleaned.length > 0 ? cleaned : undefined;
 }

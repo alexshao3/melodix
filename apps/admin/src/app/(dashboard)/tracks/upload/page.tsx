@@ -22,6 +22,7 @@ export default function UploadTrackPage() {
   const [title, setTitle] = useState('');
   const [artistName, setArtistName] = useState('');
   const [genre, setGenre] = useState('');
+  const [lyrics, setLyrics] = useState('');
   const [duration, setDuration] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +88,7 @@ export default function UploadTrackPage() {
       form.append('title', title);
       form.append('artistName', artistName);
       if (genre) form.append('genre', genre);
+      if (lyrics.trim()) form.append('lyrics', lyrics);
       if (duration && Number.isFinite(duration)) form.append('duration', String(duration));
       if (peaks) form.append('peaks', JSON.stringify(peaks));
       form.append('audio', audio);
@@ -165,6 +167,30 @@ export default function UploadTrackPage() {
               <span className="text-zinc-300">
                 {duration ? `${duration}s` : audio ? 'analysing…' : '—'}
               </span>
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl">
+            <label className="block">
+              <span className="mb-1 flex items-center justify-between text-xs uppercase tracking-widest text-zinc-400">
+                <span>Lyrics</span>
+                <span className="text-[10px] normal-case tracking-normal text-zinc-500">
+                  optional · plain text · one line per row
+                </span>
+              </span>
+              <textarea
+                value={lyrics}
+                onChange={(e) => setLyrics(e.target.value)}
+                rows={8}
+                placeholder={
+                  'Paste the lyrics from your SUNO generation here.\nThe Aeneas aligner can sync them to the audio after upload.'
+                }
+                className="admin-input min-h-[12rem] resize-y font-mono text-xs leading-relaxed"
+              />
+            </label>
+            <p className="mt-2 text-xs text-zinc-500">
+              You can sync these to the audio after upload from the track row →
+              &ldquo;Auto-sync&rdquo;.
             </p>
           </div>
 

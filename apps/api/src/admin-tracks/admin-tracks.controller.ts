@@ -16,6 +16,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AdminGuard } from '../admin-auth/admin.guard';
 import { AdminTracksService } from './admin-tracks.service';
 import {
+  AutoSyncLyricsDto,
   CreateTrackDto,
   UpdateTrackDto,
   ListTracksQueryDto,
@@ -69,6 +70,7 @@ export class AdminTracksController {
         genre: dto.genre,
         duration: dto.duration,
         peaks,
+        lyrics: dto.lyrics,
       },
       audioFile,
       files.cover?.[0],
@@ -109,5 +111,18 @@ export class AdminTracksController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.adminTracks.remove(id);
+  }
+
+  /**
+   * Run forced alignment on the track's audio + plain-text lyrics. The
+   * sidecar (Aeneas, ADR-0030) takes ~30s for a typical 3-min song; the
+   * admin UI shows a spinner and refetches the track on success.
+   */
+  @Post(':id/auto-sync-lyrics')
+  autoSyncLyrics(@Param('id') id: string, @Body() dto: AutoSyncLyricsDto) {
+    return this.adminTracks.autoSyncLyrics(id, {
+      language: dto.language,
+      lyricsOverride: dto.lyrics,
+    });
   }
 }

@@ -90,11 +90,31 @@ services:
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
       # Postgres-blob storage (used when STORAGE_BACKEND=postgres)
       API_PUBLIC_URL: ${API_PUBLIC_URL:-}
+      # URL of the Aeneas forced-aligner sidecar (ADR-0030). Same docker
+      # network, so the service hostname `aeneas` resolves automatically.
+      AENEAS_URL: ${AENEAS_URL:-http://aeneas:8000}
       PORT: '4000'
       NODE_ENV: production
     # Uncomment to expose API externally for debugging
     # ports:
     #   - '4000:4000'
+
+  # ── Aeneas forced-aligner sidecar ──────────────────────────────────
+  # Auto-syncs plain-text lyrics to audio for the admin "Auto-sync from
+  # SUNO lyrics" flow. Internal-only; never exposed publicly. See ADR-0030.
+  aeneas:
+    build:
+      context: services/aeneas-aligner
+      dockerfile: Dockerfile
+    container_name: melodix-aeneas
+    restart: unless-stopped
+    environment:
+      # Used to resolve relative `audio_url` values (postgres backend stores
+      # /api/storage/<key>) without exposing the API publicly.
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:4000}
+    # Uncomment to expose for local debugging
+    # ports:
+    #   - '8000:8000'
 
   # ── Web (Next.js main site) ────────────────────────────────────────
   web:

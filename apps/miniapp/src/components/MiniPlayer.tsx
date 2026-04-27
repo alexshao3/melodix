@@ -108,8 +108,8 @@ export function MiniPlayer() {
             <LyricsSheet
               open={lyricsOpen}
               onClose={() => setLyricsOpen(false)}
-              artist={currentTrack.artistName}
-              title={currentTrack.title}
+              track={currentTrack}
+              position={position}
             />
           )}
         </motion.div>
