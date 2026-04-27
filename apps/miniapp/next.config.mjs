@@ -1,3 +1,11 @@
+function apiInternalUrl() {
+  return (
+    process.env.API_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:4000'
+  ).replace(/\/+$/, '');
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -15,6 +23,15 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
+  // Same-origin proxy for postgres-backend audio. See ADR-0029.
+  async rewrites() {
+    return [
+      {
+        source: '/api/storage/:path*',
+        destination: `${apiInternalUrl()}/api/storage/:path*`,
+      },
+    ];
   },
 };
 

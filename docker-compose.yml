@@ -110,6 +110,9 @@ services:
     environment:
       HOSTNAME: '0.0.0.0'
       PORT: '3000'
+      # Server-side internal URL used by Next.js to proxy /api/storage/*
+      # to the API container (so postgres-backend audio plays same-origin).
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:4000}
     # Uncomment to expose web externally for debugging
     # ports:
     #   - '3000:3000'
@@ -128,6 +131,7 @@ services:
     environment:
       HOSTNAME: '0.0.0.0'
       PORT: '3001'
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:4000}
     # Uncomment to expose miniapp externally for debugging
     # ports:
     #   - '3001:3001'
@@ -146,6 +150,7 @@ services:
     environment:
       HOSTNAME: '0.0.0.0'
       PORT: '3002'
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:4000}
     # Uncomment to expose admin externally for debugging
     # ports:
     #   - '3002:3002'
