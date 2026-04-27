@@ -103,6 +103,9 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4000}
+        # Build-time arg — Next.js bakes rewrite destinations into the routes
+        # manifest in `output: 'standalone'` mode (ADR-0029).
+        API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:4000}
     container_name: melodix-web
     restart: unless-stopped
     depends_on:
@@ -124,6 +127,7 @@ services:
       dockerfile: apps/miniapp/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4000}
+        API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:4000}
     container_name: melodix-miniapp
     restart: unless-stopped
     depends_on:
@@ -143,6 +147,7 @@ services:
       dockerfile: apps/admin/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4000}
+        API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:4000}
     container_name: melodix-admin
     restart: unless-stopped
     depends_on:

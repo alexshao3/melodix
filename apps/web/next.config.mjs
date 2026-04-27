@@ -1,8 +1,9 @@
-// Resolve the internal API URL when Next reads its config (build + server
-// start). Inside Docker, API_INTERNAL_URL=http://api:4000 reaches the API
-// container directly. Outside Docker we fall back to NEXT_PUBLIC_API_URL or
-// localhost. Defining this in a function lets us re-resolve at server start
-// in `output: 'standalone'` mode where rewrites are evaluated then.
+// Resolve the internal API URL at `next build` time. In `output: 'standalone'`
+// mode Next.js evaluates `rewrites()` once during build and serializes the
+// destination string into the routes manifest, so this MUST be set as a
+// docker build arg (see apps/web/Dockerfile + docker-compose.yml `args`),
+// not just a runtime env var. Inside Docker, the default `http://api:4000`
+// reaches the API container via the docker-compose service hostname.
 function apiInternalUrl() {
   return (
     process.env.API_INTERNAL_URL ||
