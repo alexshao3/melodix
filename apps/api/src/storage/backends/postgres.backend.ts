@@ -11,13 +11,16 @@ import type { StorageBackend, StorageFolder } from './storage.backend';
  * values > ~2 KB), and served via `GET /api/storage/<folder>/<filename>`
  * with HTTP Range support — see `StorageController`.
  *
- * Required env vars (only when `STORAGE_BACKEND=postgres`):
- *   API_PUBLIC_URL    base URL where this API is reachable from clients,
- *                     e.g. http://localhost:4000 (dev) or
- *                     https://api.melodix.example.com (prod). The
- *                     uploaded URLs become `${API_PUBLIC_URL}/api/storage/<key>`,
- *                     so they must be fetchable from the user's browser
- *                     (web + miniapp).
+ * Optional env vars:
+ *   API_PUBLIC_URL    Optional absolute base URL for upload URLs. If set,
+ *                     uploaded URLs become `${API_PUBLIC_URL}/api/storage/<key>`
+ *                     (use this when fronting the API with a CDN). If not
+ *                     set, uploaded URLs are stored as relative paths
+ *                     `/api/storage/<key>` and resolved against the page
+ *                     origin — the web/miniapp/admin Next.js apps proxy
+ *                     `/api/storage/*` to this API at runtime so playback
+ *                     works same-origin without a separate public API host
+ *                     (see ADR-0029).
  *
  * Use this backend when you'd rather have a single self-hosted Postgres
  * deal with both data and binary blobs (e.g. behind Cloudflare Tunnel,
@@ -34,14 +37,9 @@ export class PostgresStorageBackend implements StorageBackend {
     private readonly logger: Logger,
   ) {
     // Trim trailing slashes so we can safely append `/api/storage/<key>`.
+    // Empty string is a valid (and recommended) default: relative URLs are
+    // resolved by the Next.js rewrite proxy in web/miniapp/admin (ADR-0029).
     this.publicUrl = (config.get<string>('API_PUBLIC_URL', '') || '').replace(/\/+$/, '');
-    if (!this.publicUrl) {
-      this.logger.warn(
-        '[postgres] API_PUBLIC_URL is not set; uploaded URLs will be relative ' +
-          '(/api/storage/<key>) and may not resolve from the web/miniapp origins. ' +
-          'Set API_PUBLIC_URL to the public base URL of the API (e.g. https://api.melodix.example.com).',
-      );
-    }
   }
 
   async upload(

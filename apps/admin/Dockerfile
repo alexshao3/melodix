@@ -16,9 +16,15 @@ COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
 COPY apps/admin/ apps/admin/
 
-# Build arg for API URL (baked into the Next.js client bundle)
+# Build arg for API URL (baked into the Next.js client bundle).
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Internal URL used by the Next.js `/api/storage/*` rewrite (ADR-0029).
+# Must be a build arg — Next.js bakes rewrite destinations into the routes
+# manifest at build time when `output: 'standalone'`.
+ARG API_INTERNAL_URL=http://api:4000
+ENV API_INTERNAL_URL=$API_INTERNAL_URL
 
 RUN pnpm --filter @melodix/admin build
 
