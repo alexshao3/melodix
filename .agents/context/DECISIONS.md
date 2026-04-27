@@ -101,7 +101,7 @@
 ## ADR-0011 · Playlist reordering = up/down arrows, not drag-and-drop
 
 **Date:** 2026-04-26
-**Status:** accepted
+**Status:** superseded by ADR-0022
 **Context:** Reordering tracks inside a playlist is the most touch-sensitive interaction in the editor. We want it to work identically on web, mobile web, and inside the Telegram WebView. Adding `@dnd-kit/core` + `@dnd-kit/sortable` would solve the desktop case beautifully (~25 KB gzipped) but introduces a touch-DnD library inside Telegram WebView, which has well-known issues with native scroll competition.
 **Decision:** Render a per-row up-arrow / down-arrow control on the web editor and persist on each click via `PATCH /playlists/:id/reorder`. The Mini App keeps the playlist read-only (edit sheet handles metadata only) — adding reorder there is deferred until we have a tested touch-DnD story.
 **Consequences:** Zero new runtime deps; trivially testable; works for keyboard users out of the box. Cost: bulk reordering takes more clicks than a drag would. Migrating to DnD later is a single component swap because the reorder API already takes the full ordered list.
@@ -480,3 +480,11 @@ client gate that reads the JWT payload and redirects to `/login?next=...`).
   already well-typed and tested; rewriting it as Next.js server actions
   would duplicate validation logic and lose the Mini App / future CLI
   reuse path.
+
+## ADR-0022 · Playlist drag-to-reorder via framer-motion `Reorder` (supersedes ADR-0011)
+
+**Date:** 2026-04-27
+**Status:** accepted
+**Context:** ADR-0011 (2026-04-26) deferred drag-and-drop in favour of up/down arrow buttons because the only viable DnD libraries at the time (`@dnd-kit/*`, `react-beautiful-dnd`) were both new dependencies and had known scroll-competition issues inside Telegram WebView. Since then, two things changed: (a) `framer-motion` is **already** in `apps/{web,miniapp}` deps for animation, and exposes `Reorder.Group` / `Reorder.Item` / `useDragControls` — i.e. zero new deps, (b) we now know how to gate drag behind an explicit grip handle (`dragListener={false}` + manual `dragControls.start(e)` on `onPointerDown`), which avoids competing with native scroll on touch devices.
+**Decision:** Replace the up/down arrow web UI with a real drag-to-reorder list built on framer-motion's `Reorder` primitives, and bring the same UX to the Mini App. Each row gets a visible `GripVertical` handle on the left; tapping/clicking the rest of the row still plays the track. The persisted order is committed to `PATCH /playlists/:id/reorder` once per pointer-release (`Reorder.Item`'s `onDragEnd`), with a previous-order snapshot for rollback on failure. Web keeps the up/down arrows as a `sm:hidden` keyboard / mobile a11y fallback so non-pointer users are not stranded.
+**Consequences:** Zero new runtime deps. Touch + pointer + keyboard support across both apps. Mini App finally has reorder + per-track remove. Cost: state is now dual (`tracks` for the in-flight UI + `persisted` for the rollback snapshot), so any out-of-band mutation (e.g. removing a track) must update **both** atomically — non-obvious enough that we use functional setters in the remove path to avoid stale-closure clobbering when a drag and a remove are in flight together. ADR-0011's `Status` flips to `superseded by ADR-0022`. The reorder API contract is unchanged.

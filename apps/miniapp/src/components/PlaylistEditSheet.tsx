@@ -14,8 +14,8 @@ interface PlaylistEditSheetProps {
 /**
  * Trigger button + bottom sheet that lets the playlist owner rename, swap the
  * cover, toggle visibility, or delete the playlist from inside the Mini App.
- * Track reordering is intentionally web-only for now (touch DnD inside
- * Telegram's WebView is fiddly and not worth a dedicated library yet).
+ * Track reordering and per-track removal happen inline in the playlist track
+ * list via `EditablePlaylistTracks` (drag handle + trash button).
  */
 export function PlaylistEditSheet({ playlist, isOwner }: PlaylistEditSheetProps) {
   const router = useRouter();

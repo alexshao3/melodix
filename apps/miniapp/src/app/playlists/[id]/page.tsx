@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { api } from '@/lib/api';
-import { MiniTrackRow } from '@/components/MiniTrackRow';
+import { MiniTracksAuthBoundary } from '@/components/MiniTracksAuthBoundary';
 import { PlaylistOwnerGate } from '@/components/PlaylistOwnerGate';
 
 export const dynamic = 'force-dynamic';
@@ -39,11 +39,7 @@ export default async function MiniPlaylist({ params }: PageProps) {
           <PlaylistOwnerGate playlist={playlist} />
         </div>
       </header>
-      <div className="flex flex-col">
-        {tracks.map((t, i) => (
-          <MiniTrackRow key={t.id} track={t} index={i} queue={tracks} />
-        ))}
-      </div>
+      <MiniTracksAuthBoundary playlist={playlist} tracks={tracks} />
     </div>
   );
 }

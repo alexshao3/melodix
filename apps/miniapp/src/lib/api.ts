@@ -103,6 +103,16 @@ export const api = {
     }),
   deletePlaylist: (id: string) =>
     authed<{ ok: true }>(`/api/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  reorderPlaylist: (id: string, trackIds: string[]) =>
+    authed<{ ok: true }>(`/api/playlists/${encodeURIComponent(id)}/reorder`, {
+      method: 'PATCH',
+      jsonBody: { trackIds },
+    }),
+  removePlaylistTrack: (id: string, trackId: string) =>
+    authed<{ ok: true }>(
+      `/api/playlists/${encodeURIComponent(id)}/tracks/${encodeURIComponent(trackId)}`,
+      { method: 'DELETE' },
+    ),
   me: () => authed<{ id: string; username: string }>(`/api/me`),
   history: (limit = 30) => safe<Track[]>(`/api/me/history?limit=${limit}`, []),
   lyrics: (artist: string, title: string) =>
