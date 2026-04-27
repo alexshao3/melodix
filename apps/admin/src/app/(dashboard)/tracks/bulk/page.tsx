@@ -76,8 +76,15 @@ export default function BulkUploadPage() {
     if (items.length === 0) return;
 
     setRunning(true);
+    // Track successes locally — `items` is captured at call time and the
+    // functional `setItems` updates inside the loop don't mutate this
+    // binding, so reading `items[*].status` here would always see
+    // 'pending'.
+    let attempted = 0;
+    let succeeded = 0;
     for (const item of items) {
       if (item.status === 'done') continue;
+      attempted += 1;
 
       setItems((prev) =>
         prev.map((i) => (i.id === item.id ? { ...i, status: 'uploading', error: undefined } : i)),
@@ -94,6 +101,7 @@ export default function BulkUploadPage() {
         if (peaks) form.append('peaks', JSON.stringify(peaks));
         form.append('audio', item.file);
         await adminApi.createTrack(form);
+        succeeded += 1;
         setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'done' } : i)));
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
@@ -109,9 +117,10 @@ export default function BulkUploadPage() {
     }
     setRunning(false);
 
-    const successes = items.filter((i) => i.status === 'done').length;
-    if (successes === items.length) {
-      toast.success(`Uploaded ${items.length} track${items.length === 1 ? '' : 's'}.`);
+    if (attempted > 0 && succeeded === attempted) {
+      toast.success(`Uploaded ${succeeded} track${succeeded === 1 ? '' : 's'}.`);
+    } else if (succeeded > 0) {
+      toast.success(`Uploaded ${succeeded} of ${attempted} tracks.`);
     }
   };
 
