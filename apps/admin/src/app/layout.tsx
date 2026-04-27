@@ -1,12 +1,18 @@
+import type { CSSProperties } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
 import { MotionConfig } from 'framer-motion';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
 import { ToastProvider } from '@/components/Toast';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+// See apps/web/src/app/layout.tsx — fonts are bundled via npm to keep
+// `next build` offline-safe (ADR-0027).
+const fontVars: CSSProperties = {
+  ['--font-sans' as string]: '"Inter Variable", system-ui, sans-serif',
+  ['--font-display' as string]: '"Space Grotesk Variable", "Inter Variable", system-ui, sans-serif',
+};
 
 export const metadata: Metadata = {
   title: 'Melodix Admin',
@@ -22,7 +28,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
+    <html lang="en" style={fontVars} suppressHydrationWarning>
       <body className="font-sans">
         <MotionConfig reducedMotion="user">
           <AuthProvider>
