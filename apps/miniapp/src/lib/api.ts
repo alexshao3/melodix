@@ -75,7 +75,7 @@ export const api = {
   album: (id: string) =>
     safe<{ album: Album; tracks: Track[] } | null>(`/api/albums/${encodeURIComponent(id)}`, null),
   artist: (id: string) =>
-    safe<{ artist: Artist; tracks: Track[] } | null>(
+    safe<{ artist: Artist; tracks: Track[]; albums: Album[] } | null>(
       `/api/artists/${encodeURIComponent(id)}`,
       null,
     ),

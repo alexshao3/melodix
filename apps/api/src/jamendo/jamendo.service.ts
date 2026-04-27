@@ -241,6 +241,25 @@ export class JamendoService {
     );
   }
 
+  async getArtistAlbums(artistId: string, limit = 24): Promise<Album[]> {
+    if (!this.isLive()) {
+      // No demo album-by-artist mapping — keep the page graceful
+      return [];
+    }
+    return this.cache.wrap(
+      `${CACHE_PREFIX}:artist-albums:${artistId}:${limit}`,
+      CACHE_TTL,
+      async () => {
+        const results = await this.fetch<JamendoAlbum>('/albums', {
+          artist_id: artistId,
+          limit,
+          order: 'releasedate_desc',
+        });
+        return results.map((a) => this.mapAlbum(a));
+      },
+    );
+  }
+
   async getArtistTracks(artistId: string, limit = 50): Promise<Track[]> {
     if (!this.isLive()) return DEMO_TRACKS.filter((t) => t.artistId === artistId).slice(0, limit);
     return this.cache.wrap(

@@ -5,6 +5,8 @@ import { TrackList } from '@/components/sections/TrackList';
 import { PlayTracksButton } from '@/components/sections/PlayTracksButton';
 import { Section } from '@/components/sections/Section';
 import { FollowButton } from '@/components/artists/FollowButton';
+import { AlbumGrid } from '@/components/artists/AlbumGrid';
+import { ArtistBio } from '@/components/artists/ArtistBio';
 import { api } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +23,7 @@ export default async function ArtistPage({ params }: PageProps) {
   } catch {
     notFound();
   }
-  const { artist, tracks } = data;
+  const { artist, tracks, albums } = data;
   const topTracks = tracks.slice(0, 10);
 
   return (
@@ -51,9 +53,7 @@ export default async function ArtistPage({ params }: PageProps) {
               {formatNumber(artist.followers)} followers
             </div>
           )}
-          {artist.bio && (
-            <p className="mt-3 max-w-2xl text-sm text-zinc-300 line-clamp-3">{artist.bio}</p>
-          )}
+          {artist.bio && <ArtistBio bio={artist.bio} />}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <PlayTracksButton tracks={tracks} label="Play top tracks" />
             <FollowButton artistId={artist.id} />
@@ -67,6 +67,12 @@ export default async function ArtistPage({ params }: PageProps) {
         </Section>
       ) : (
         <p className="mt-8 text-sm text-zinc-400">No tracks available for this artist.</p>
+      )}
+
+      {albums.length > 0 && (
+        <Section title="Discography" subtitle="Albums and EPs.">
+          <AlbumGrid albums={albums} />
+        </Section>
       )}
     </div>
   );
