@@ -210,7 +210,7 @@ export default function TracksPage() {
       <PageHeader
         eyebrow="Catalog"
         title="Uploaded tracks"
-        description="Search, edit and delete tracks you've uploaded to Cloudflare R2."
+        description="Search, edit and delete tracks you've uploaded to S3-compatible storage (Backblaze B2)."
         actions={
           <>
             <Link
@@ -387,7 +387,7 @@ export default function TracksPage() {
       <ConfirmDialog
         open={!!deleting}
         title="Delete this track?"
-        description={`"${deleting?.title}" will be permanently removed from the catalog and from R2 storage. This cannot be undone.`}
+        description={`"${deleting?.title}" will be permanently removed from the catalog and from object storage. This cannot be undone.`}
         confirmLabel="Delete"
         destructive
         busy={deletingBusy}
@@ -398,7 +398,7 @@ export default function TracksPage() {
       <ConfirmDialog
         open={bulkDeleteOpen}
         title={`Delete ${selected.size} track${selected.size === 1 ? '' : 's'}?`}
-        description={`The selected upload${selected.size === 1 ? '' : 's'} will be permanently removed from the catalog and from R2 storage. This cannot be undone.`}
+        description={`The selected upload${selected.size === 1 ? '' : 's'} will be permanently removed from the catalog and from object storage. This cannot be undone.`}
         confirmLabel={`Delete ${selected.size}`}
         destructive
         busy={bulkBusy}

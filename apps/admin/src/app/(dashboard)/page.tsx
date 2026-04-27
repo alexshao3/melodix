@@ -114,7 +114,7 @@ export default function DashboardPage() {
           icon={<ListMusic className="h-4 w-4" />}
           label="Uploaded tracks"
           value={loading ? '—' : String(data?.total ?? 0)}
-          hint="Tracks in R2"
+          hint="Tracks in object storage"
         />
         <StatCard
           icon={<ToggleLeft className="h-4 w-4" />}
@@ -125,7 +125,7 @@ export default function DashboardPage() {
         <StatCard
           icon={<Database className="h-4 w-4" />}
           label="Storage backend"
-          value="Cloudflare R2"
+          value="Backblaze B2"
           hint="S3-compatible"
         />
         <StatCard

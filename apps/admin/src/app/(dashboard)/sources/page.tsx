@@ -9,7 +9,8 @@ import { PageHeader } from '@/components/PageHeader';
 
 const SOURCE_DESCRIPTIONS: Record<string, string> = {
   jamendo: 'Public Jamendo catalog. Disable to hide all Jamendo-sourced tracks from the apps.',
-  upload: 'Tracks uploaded via this admin panel and stored in Cloudflare R2.',
+  upload:
+    'Tracks uploaded via this admin panel and stored in S3-compatible object storage (Backblaze B2 by default).',
   fma: 'Free Music Archive — additional public catalog (planned).',
   demo: 'Bundled royalty-free demo tracks. Used as a fallback when Jamendo is unavailable.',
 };

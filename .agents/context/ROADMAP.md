@@ -37,9 +37,9 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 
 ## H3 — Long-term / ambitious
 
-- [x] **Admin system Phase 1 (API)** — `AdminUser` model, admin JWT auth, Cloudflare R2 upload service, CRUD API for uploaded tracks, music source toggle. `TracksService` and `SearchService` merge results from enabled sources. _(shipped in this PR; ADR-0020)_
+- [x] **Admin system Phase 1 (API)** — `AdminUser` model, admin JWT auth, S3-compatible upload service (Backblaze B2 by default; configurable for any S3-compatible provider), CRUD API for uploaded tracks, music source toggle. `TracksService` and `SearchService` merge results from enabled sources. _(ADR-0020; storage made provider-agnostic in ADR-0025)_
 - [x] **Admin dashboard UI (Phase 2)** — Next.js admin panel at `apps/admin` (port 3002). Login + first-time setup; dashboard with stats and quick source toggles; tracks list with search / paginate / edit / delete; single-track upload with drag-drop and metadata; bulk upload queue with per-row status; full sources page. Talks to the Phase-1 admin API only. ADR-0021.
-- [-] **Direct upload source** — superseded by admin upload system above. Admin uploads tracks via `POST /api/admin/tracks` → R2.
+- [-] **Direct upload source** — superseded by admin upload system above. Admin uploads tracks via `POST /api/admin/tracks` → S3-compatible storage (Backblaze B2 by default).
 - [x] **Waveform peaks** — generated client-side at upload via `OfflineAudioContext` (no ffmpeg / `audiowaveform` on the API container), stored as a `Json?` column on `Track`, rendered as an SVG scrubber by `packages/ui/Waveform` in both web `PlayerBar` and Mini App `MiniPlayer`. Falls back to the plain progress bar for Jamendo / demo tracks. _(shipped in PR-C; ADR-0023)_
 - [ ] **Free-Music-Archive (FMA) source** — additional public catalog. Already enumerated in `Track.source`.
 - [ ] **Server-side streaming proxy** with HTTP range support — better mobile data behaviour, gives us hooks for analytics & DRM-free transcoding.
