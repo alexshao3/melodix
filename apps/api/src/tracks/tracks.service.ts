@@ -121,6 +121,8 @@ export class TracksService {
     artistId: string;
     albumId: string | null;
     peaks: unknown;
+    lyrics?: string | null;
+    syncedLyrics?: string | null;
     artist: { name: string };
   }): Track {
     return {
@@ -138,6 +140,8 @@ export class TracksService {
       albumId: t.albumId,
       albumName: null,
       peaks: normalizePeaks(t.peaks),
+      lyrics: t.lyrics ?? null,
+      syncedLyrics: t.syncedLyrics ?? null,
     };
   }
 }

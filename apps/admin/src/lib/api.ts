@@ -129,6 +129,16 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify({ ids, genre }),
     }),
+  /**
+   * Trigger Aeneas forced alignment on the track. The optional `lyrics`
+   * field replaces the stored plain-text lyrics in the same call so the
+   * admin can fix typos before sync without a separate save round-trip.
+   */
+  autoSyncLyrics: (id: string, body: { lyrics?: string; language?: string } = {}) =>
+    request<Track>(`/api/admin/tracks/${encodeURIComponent(id)}/auto-sync-lyrics`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 
   listSources: () => request<MusicSource[]>('/api/admin/sources'),
   toggleSource: (name: string, enabled: boolean) =>

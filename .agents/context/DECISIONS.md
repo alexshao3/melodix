@@ -566,3 +566,67 @@ A new `StorageController` serves blobs with HTTP **Range** support: it parses `b
 **Context:** When `STORAGE_BACKEND=postgres`, uploaded tracks are served by the API at `GET /api/storage/<folder>/<filename>` (Range-supported, ADR-0026). The original implementation required operators to set `API_PUBLIC_URL` to the public hostname of the API; uploads were stored as absolute URLs `${API_PUBLIC_URL}/api/storage/<key>`. In production self-host this is awkward: the operator must (a) expose the API on its own public hostname (`api.example.com`) via Cloudflare Tunnel, (b) configure CORS so the web origin can fetch from the API origin. If `API_PUBLIC_URL` is unset, `audioUrl` falls back to a relative path `/api/storage/<key>` which the browser resolves against the page origin (e.g. `https://melodix.example.com/api/storage/...`) — but the web app's Next.js server has no such route, so playback 404s. Operator's reproducible bug: uploaded a track via `STORAGE_BACKEND=postgres` with `API_PUBLIC_URL` empty, hit play, nothing happened (the request hit the web container, which has no `/api/storage/*` handler).
 **Decision:** Make `/api/storage/*` reachable as a same-origin route on every Next.js app via `next.config.mjs` `async rewrites()`. Each of `apps/{web,miniapp,admin}/next.config.mjs` adds a single rewrite that proxies `/api/storage/:path*` to `${API_INTERNAL_URL}/api/storage/:path*`. `API_INTERNAL_URL` defaults to `http://api:4000` (the docker-compose service hostname). **Critically, in `output: 'standalone'` mode Next.js evaluates `rewrites()` once during `next build` and serializes the destination URL into `routes-manifest.json`** — the standalone server reads the pre-built manifest at startup and does not re-invoke `rewrites()`. So `API_INTERNAL_URL` must be set as a Docker **build arg**, not just a runtime env. Each of `apps/{web,miniapp,admin}/Dockerfile` declares `ARG API_INTERNAL_URL=http://api:4000`, and `docker-compose.yml` passes it via `build.args` for all three Next services. The runtime `environment:` value is kept as a defence-in-depth (Next can re-evaluate config in dev mode). Side effects: `API_PUBLIC_URL` becomes optional — leave it empty in `.env.production` and uploads land as relative URLs. Operators who want a CDN in front of audio can still set `API_PUBLIC_URL` explicitly and bypass the rewrite. The rewrite preserves `Range` and `Accept-Ranges` headers, which is what makes seek-during-playback work via the substring-on-bytea endpoint described in ADR-0026.
 **Consequences:** Self-host setups with `STORAGE_BACKEND=postgres` work zero-config (`docker compose up --build` now plays uploaded tracks without any API hostname / CORS work). The API container does not need to be exposed publicly at all — only `web`/`miniapp`/`admin` are reverse-proxied via Cloudflare Tunnel. CORS surface shrinks accordingly (no cross-origin audio fetches by default). Trade-off: every audio byte transits the Next.js Node proxy before reaching the browser. For the typical self-host scale (tens of concurrent listeners) this is negligible — Next's rewrite uses `node-fetch` streaming and Range responses pass through. For larger deployments, set `API_PUBLIC_URL` to a CDN URL (e.g. Cloudflare in front of the API) and the rewrite is skipped because absolute URLs in `Track.audioUrl` bypass it.
+
+## ADR-0030 · Auto-synced lyrics via Aeneas forced-aligner sidecar
+
+**Date:** 2026-04-27
+**Status:** accepted
+**Context:** Operators who generate music with SUNO AI (or any other text-first
+song generator) already have the exact lyrics — what they don't have are
+timestamps. The previous lyrics flow was good for Jamendo / demo tracks (proxy
+to lyrics.ovh, plain text, no sync) but wrong for upload-source tracks: there
+is no public lyrics provider that knows about a one-off SUNO render, and we'd
+rather not ASR-transcribe lyrics we already have verbatim (Whisper hallucinates
+on rap, falsetto, and SUNO V4 distortion).
+
+**Decision:** Add forced alignment via [Aeneas](https://github.com/readbeyond/aeneas)
+behind a thin Python FastAPI sidecar (`services/aeneas-aligner/`). Aeneas
+synthesises a reference signal from the plain text using eSpeak TTS, then runs
+DTW (dynamic time warping) on the MFCCs of the input audio against the
+reference; the output is per-line `begin`/`end` times we serialise as standard
+LRC (`[mm:ss.xx]<line>`). DTW is deterministic — no model "predictions" or
+hallucinations — and ~10× realtime on CPU (a 3-minute song aligns in ~30 s).
+
+Wiring:
+
+- **Schema:** add `Track.lyrics` (plain text), `Track.syncedLyrics` (LRC string)
+  and `Track.lyricsAlignedAt` (`DateTime?`). Migration `20260427120959_add_track_lyrics`.
+- **Sidecar:** Python 3.11-slim image with `aeneas==1.7.3.0`, `numpy<2`, `espeak`,
+  `ffmpeg`, FastAPI. Listens on `:8000`, exposed only on the internal Docker
+  network as `http://aeneas:8000` — never published to the host. Endpoint
+  `POST /align { audio_url, lyrics_text, language }` returns `{ lrc, line_count,
+duration_s }`. Relative `audio_url` values (e.g. `/api/storage/tracks/<uuid>.mp3`,
+  emitted by the postgres backend per ADR-0029) are resolved against
+  `API_INTERNAL_URL` before fetching, so the sidecar works regardless of which
+  storage backend is active.
+- **API:** `POST /api/admin/tracks/:id/auto-sync-lyrics { lyrics?, language? }`
+  reads (or accepts an override of) the track's plain lyrics, calls the sidecar
+  with a 5-minute HTTP timeout, persists the resulting LRC + `lyricsAlignedAt`,
+  and returns the updated track. Editing `lyrics` via the normal `PATCH` route
+  intentionally clears `syncedLyrics` because the timestamps would no longer
+  line up — admins must re-run alignment to refresh.
+- **Admin UI:** the upload form gains an optional plain-text `Lyrics` textarea.
+  The edit dialog adds the same textarea plus an "Auto-sync" button (with a
+  language picker for ISO 639-3 codes — `eng`, `vie`, `cmn`, `jpn`, etc.)
+  that calls the new endpoint and shows the resulting LRC inline.
+- **Player:** `parseLrc` / `findActiveLine` live in `@melodix/shared` (binary
+  search by `audio.currentTime`, O(log n) per `timeupdate` tick). The web
+  `LyricsDrawer` and miniapp `LyricsSheet` now accept the full `Track` plus
+  the live `position`. Render priority is **synced LRC > plain `lyrics` > legacy
+  lyrics.ovh proxy** so existing Jamendo/demo behaviour is unchanged. The active
+  line is highlighted with a fuchsia drop-shadow and auto-scrolled to centre.
+- **Compose:** the new `aeneas` service has its own healthcheck and `restart:
+unless-stopped`. The API container reads `AENEAS_URL` (default
+  `http://aeneas:8000`).
+
+**Consequences:** Self-hosters who use SUNO (or write their own lyrics) can
+sync the entire catalog without leaving the admin UI. The sidecar is a
+~600 MB Python image — heavier than ideal but isolated from the Node API
+process and only built when `aeneas` is in the compose target. Aeneas supports
+~30 languages out of the box; unsupported languages fall back to the eSpeak
+"variant" closest to the requested code, which is usually still good enough
+for line-level alignment (we sync at the line level, not the syllable level).
+The alternative — WhisperX — was rejected because it would re-transcribe
+lyrics we already have exactly, introducing ASR error on artist names, slang,
+and stylised vocals; forced alignment is the right tool when the text is
+already known to be correct.

@@ -1,15 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Mic2, X } from 'lucide-react';
+import { findActiveLine, parseLrc, type Track } from '@melodix/shared';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/cn';
 
 export interface LyricsDrawerProps {
-  artist: string;
-  title: string;
+  /**
+   * Currently playing track. We read `syncedLyrics` (LRC) and `lyrics`
+   * (plain text) directly from it so upload-source tracks display their
+   * own SUNO-AI / hand-written lyrics without round-tripping through the
+   * lyrics.ovh proxy.
+   */
+  track: Track;
+  /** Live audio position (seconds) — drives the active-line highlight. */
+  position: number;
   open: boolean;
   onClose: () => void;
 }
@@ -17,17 +25,32 @@ export interface LyricsDrawerProps {
 type Status = 'idle' | 'loading' | 'found' | 'missing' | 'error';
 
 /**
- * Right-side slide-over with lyrics for the current track. Fetches lazily
- * (only when opened or when artist/title changes while open) and trusts the
- * server to cache via Redis (24h hits, 1h misses) — see ADR-0017.
+ * Right-side slide-over with lyrics for the current track.
+ *
+ * Three render modes:
+ * 1. Track has `syncedLyrics` (LRC) → karaoke-style synced view, the
+ *    active line is highlighted and auto-scrolled into view.
+ * 2. Track has plain `lyrics` (no alignment yet) → static `<pre>` view.
+ * 3. Neither → fall back to the legacy lyrics.ovh fetch (Jamendo/demo
+ *    tracks where we don't author the lyrics ourselves; ADR-0017).
  */
-export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps) {
+export function LyricsDrawer({ track, position, open, onClose }: LyricsDrawerProps) {
   const [status, setStatus] = useState<Status>('idle');
   const [text, setText] = useState<string | null>(null);
 
+  const synced = useMemo(() => parseLrc(track.syncedLyrics ?? null), [track.syncedLyrics]);
+  const hasSynced = synced.length > 0;
+  const hasPlain = !!track.lyrics?.trim();
+
   useEffect(() => {
     if (!open) return;
-    if (!artist || !title) {
+    if (hasSynced || hasPlain) {
+      // We already have lyrics on the Track row — don't burn a network
+      // round-trip on the lyrics.ovh proxy.
+      setStatus('found');
+      return;
+    }
+    if (!track.artistName || !track.title) {
       setStatus('missing');
       setText(null);
       return;
@@ -36,37 +59,30 @@ export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps
     setStatus('loading');
     setText(null);
     api
-      .lyrics(artist, title)
+      .lyrics(track.artistName, track.title)
       .then((res) => {
         if (cancelled) return;
         if (res.lyrics) {
           setText(res.lyrics);
           setStatus('found');
         } else if (res.source === 'none') {
-          // `safe()` collapses network/parse errors into the same shape
-          // as a real provider miss. The server tags transient failures
-          // with `source: 'none'` (provider 404 stays `'lyrics.ovh'`),
-          // which is what we use to surface the retry-able UI.
+          // Provider miss vs. transient failure: the API tags real 404s
+          // as `'lyrics.ovh'` and network/parse errors as `'none'`, so
+          // surface a retry-able UI for the latter.
           setStatus('error');
         } else {
           setStatus('missing');
         }
       })
       .catch(() => {
-        // Defensive: `api.lyrics()` is wrapped in `safe()` so it should
-        // never reject, but keep the branch in case the wrapper changes.
         if (cancelled) return;
         setStatus('error');
       });
     return () => {
       cancelled = true;
     };
-  }, [open, artist, title]);
+  }, [open, track.artistName, track.title, hasSynced, hasPlain]);
 
-  // Render via a portal to `document.body` because the player bar is a
-  // `motion.div` with a CSS transform — any `position: fixed` descendant
-  // would otherwise be positioned relative to the player bar instead of
-  // the viewport. SSR-safe via the `typeof window` guard.
   if (typeof window === 'undefined') return null;
 
   return createPortal(
@@ -94,8 +110,8 @@ export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps
               <div className="flex min-w-0 items-center gap-2">
                 <Mic2 className="h-4 w-4 shrink-0 text-fuchsia-400" />
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold">{title}</div>
-                  <div className="truncate text-xs text-zinc-400">{artist}</div>
+                  <div className="truncate text-sm font-semibold">{track.title}</div>
+                  <div className="truncate text-xs text-zinc-400">{track.artistName}</div>
                 </div>
               </div>
               <button
@@ -107,24 +123,38 @@ export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps
                 <X className="h-4 w-4" />
               </button>
             </header>
-            <div className={cn('flex-1 overflow-y-auto px-5 py-4 text-sm leading-relaxed')}>
-              {status === 'loading' && <LyricsSkeleton />}
-              {status === 'found' && text && (
+            <div className={cn('flex-1 overflow-y-auto px-5 py-6 text-sm leading-relaxed')}>
+              {hasSynced ? (
+                <SyncedView lines={synced} position={position} />
+              ) : hasPlain ? (
                 <pre className="whitespace-pre-wrap break-words font-sans text-zinc-200">
-                  {text}
+                  {track.lyrics}
                 </pre>
-              )}
-              {status === 'missing' && (
-                <p className="text-zinc-500">No lyrics available for this track yet.</p>
-              )}
-              {status === 'error' && (
-                <p className="text-rose-400">
-                  Couldn&apos;t load lyrics. Please try again in a moment.
-                </p>
+              ) : (
+                <>
+                  {status === 'loading' && <LyricsSkeleton />}
+                  {status === 'found' && text && (
+                    <pre className="whitespace-pre-wrap break-words font-sans text-zinc-200">
+                      {text}
+                    </pre>
+                  )}
+                  {status === 'missing' && (
+                    <p className="text-zinc-500">No lyrics available for this track yet.</p>
+                  )}
+                  {status === 'error' && (
+                    <p className="text-rose-400">
+                      Couldn&apos;t load lyrics. Please try again in a moment.
+                    </p>
+                  )}
+                </>
               )}
             </div>
             <footer className="border-t border-white/10 px-5 py-2 text-[11px] text-zinc-500">
-              Lyrics provided by lyrics.ovh
+              {hasSynced
+                ? 'Synced via Aeneas forced-aligner'
+                : hasPlain
+                  ? 'Lyrics provided by the artist'
+                  : 'Lyrics provided by lyrics.ovh'}
             </footer>
           </motion.div>
         </>
@@ -134,14 +164,52 @@ export function LyricsDrawer({ artist, title, open, onClose }: LyricsDrawerProps
   );
 }
 
+function SyncedView({ lines, position }: { lines: ReturnType<typeof parseLrc>; position: number }) {
+  const activeIdx = findActiveLine(lines, position);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const lineRefs = useRef<Array<HTMLParagraphElement | null>>([]);
+
+  // Auto-scroll the active line to the centre of the container — but only
+  // when it actually changes, otherwise every `timeupdate` (4× / sec)
+  // would fight any user scroll.
+  useEffect(() => {
+    if (activeIdx < 0) return;
+    const el = lineRefs.current[activeIdx];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [activeIdx]);
+
+  return (
+    <div ref={containerRef} className="space-y-4 text-base">
+      {lines.map((line, i) => (
+        <p
+          key={`${line.startMs}-${i}`}
+          ref={(el) => {
+            lineRefs.current[i] = el;
+          }}
+          className={cn(
+            'transition-all duration-300',
+            i === activeIdx
+              ? 'translate-x-1 text-lg font-semibold text-white drop-shadow-[0_0_12px_rgba(217,70,239,0.55)]'
+              : i < activeIdx
+                ? 'text-zinc-500'
+                : 'text-zinc-400',
+          )}
+        >
+          {line.text}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function LyricsSkeleton() {
   return (
     <div className="space-y-2">
-      {Array.from({ length: 12 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="h-3 animate-pulse rounded bg-white/10"
-          style={{ width: `${50 + ((i * 13) % 45)}%` }}
+          className="h-3 animate-pulse rounded bg-white/5"
+          style={{ width: `${60 + Math.random() * 35}%` }}
         />
       ))}
     </div>

@@ -1,6 +1,7 @@
 import { AdminTracksService } from './admin-tracks.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { StorageService } from '../storage/storage.service';
+import type { LyricsAlignerService } from './lyrics-aligner.service';
 
 /**
  * Unit-tests for the bulk-operation methods. The single-track
@@ -77,10 +78,19 @@ function makeService(seed: Row[]) {
     delete: jest.fn(async (_url: string) => undefined),
   } as unknown as StorageService;
 
+  const aligner = {
+    align: jest.fn(async () => ({
+      lrc: '[00:00.00]stub\n',
+      lineCount: 1,
+      durationS: 1,
+    })),
+  } as unknown as LyricsAlignerService;
+
   return {
-    service: new AdminTracksService(prisma, storage),
+    service: new AdminTracksService(prisma, storage, aligner),
     prisma,
     storage,
+    aligner,
     store,
   };
 }

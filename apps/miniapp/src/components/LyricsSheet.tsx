@@ -1,14 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { findActiveLine, parseLrc, type Track } from '@melodix/shared';
 import { api } from '../lib/api';
 
 export interface LyricsSheetProps {
-  artist: string;
-  title: string;
+  /**
+   * Currently playing track. We read `syncedLyrics` (LRC) and `lyrics`
+   * (plain text) directly from the row so upload-source tracks display
+   * their own lyrics without round-tripping through lyrics.ovh.
+   */
+  track: Track;
+  /** Live audio position (seconds) — drives the active-line highlight. */
+  position: number;
   open: boolean;
   onClose: () => void;
 }
@@ -17,16 +24,24 @@ type Status = 'idle' | 'loading' | 'found' | 'missing' | 'error';
 
 /**
  * Bottom-sheet lyrics view for the Mini App. Mirrors the web LyricsDrawer
- * shape but slides up from the bottom to play nicely with Telegram's WebView
- * gestures. Fetches lazily — see ADR-0017.
+ * shape — synced LRC takes priority over plain `lyrics`, both take
+ * priority over the legacy lyrics.ovh fallback (ADR-0017).
  */
-export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) {
+export function LyricsSheet({ track, position, open, onClose }: LyricsSheetProps) {
   const [status, setStatus] = useState<Status>('idle');
   const [text, setText] = useState<string | null>(null);
 
+  const synced = useMemo(() => parseLrc(track.syncedLyrics ?? null), [track.syncedLyrics]);
+  const hasSynced = synced.length > 0;
+  const hasPlain = !!track.lyrics?.trim();
+
   useEffect(() => {
     if (!open) return;
-    if (!artist || !title) {
+    if (hasSynced || hasPlain) {
+      setStatus('found');
+      return;
+    }
+    if (!track.artistName || !track.title) {
       setStatus('missing');
       setText(null);
       return;
@@ -35,18 +50,13 @@ export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) 
     setStatus('loading');
     setText(null);
     api
-      .lyrics(artist, title)
+      .lyrics(track.artistName, track.title)
       .then((res) => {
         if (cancelled) return;
         if (res.lyrics) {
           setText(res.lyrics);
           setStatus('found');
         } else if (res.source === 'none') {
-          // The miniapp `safe()` wrapper swallows network errors and
-          // returns `{ source: 'none' }`; the server also tags transient
-          // upstream failures with `source: 'none'`. Either way it's a
-          // retry-able state, distinct from a genuine provider miss
-          // (`source: 'lyrics.ovh'` with `lyrics === null`).
           setStatus('error');
         } else {
           setStatus('missing');
@@ -59,12 +69,8 @@ export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) 
     return () => {
       cancelled = true;
     };
-  }, [open, artist, title]);
+  }, [open, track.artistName, track.title, hasSynced, hasPlain]);
 
-  // Render through a portal to `document.body` because `MiniPlayer` is a
-  // `motion.div` with both `transform` and `overflow-hidden` — either
-  // would clip / displace `position: fixed` descendants. SSR-safe via
-  // the `typeof window` guard so the Mini App's WebView render is happy.
   if (typeof window === 'undefined') return null;
 
   return createPortal(
@@ -91,8 +97,8 @@ export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) 
             <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/30" />
             <header className="flex items-start justify-between gap-3 px-5 py-3">
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">{title}</div>
-                <div className="truncate text-xs text-zinc-400">{artist}</div>
+                <div className="truncate text-sm font-semibold">{track.title}</div>
+                <div className="truncate text-xs text-zinc-400">{track.artistName}</div>
               </div>
               <button
                 type="button"
@@ -104,36 +110,83 @@ export function LyricsSheet({ artist, title, open, onClose }: LyricsSheetProps) 
               </button>
             </header>
             <div className="max-h-[65vh] overflow-y-auto px-5 pb-6 text-sm leading-relaxed">
-              {status === 'loading' && (
-                <div className="space-y-2">
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-3 animate-pulse rounded bg-white/10"
-                      style={{ width: `${50 + ((i * 13) % 45)}%` }}
-                    />
-                  ))}
-                </div>
-              )}
-              {status === 'found' && text && (
+              {hasSynced ? (
+                <SyncedView lines={synced} position={position} />
+              ) : hasPlain ? (
                 <pre className="whitespace-pre-wrap break-words font-sans text-zinc-200">
-                  {text}
+                  {track.lyrics}
                 </pre>
-              )}
-              {status === 'missing' && (
-                <p className="text-zinc-500">No lyrics available for this track yet.</p>
-              )}
-              {status === 'error' && (
-                <p className="text-rose-400">Couldn&apos;t load lyrics. Try again later.</p>
+              ) : (
+                <>
+                  {status === 'loading' && (
+                    <div className="space-y-2">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-3 animate-pulse rounded bg-white/10"
+                          style={{ width: `${50 + ((i * 13) % 45)}%` }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {status === 'found' && text && (
+                    <pre className="whitespace-pre-wrap break-words font-sans text-zinc-200">
+                      {text}
+                    </pre>
+                  )}
+                  {status === 'missing' && (
+                    <p className="text-zinc-500">No lyrics available for this track yet.</p>
+                  )}
+                  {status === 'error' && (
+                    <p className="text-rose-400">Couldn&apos;t load lyrics. Try again later.</p>
+                  )}
+                </>
               )}
             </div>
             <footer className="border-t border-white/10 px-5 py-2 text-[11px] text-zinc-500">
-              Lyrics provided by lyrics.ovh
+              {hasSynced
+                ? 'Synced via Aeneas forced-aligner'
+                : hasPlain
+                  ? 'Lyrics provided by the artist'
+                  : 'Lyrics provided by lyrics.ovh'}
             </footer>
           </motion.div>
         </>
       )}
     </AnimatePresence>,
     document.body,
+  );
+}
+
+function SyncedView({ lines, position }: { lines: ReturnType<typeof parseLrc>; position: number }) {
+  const activeIdx = findActiveLine(lines, position);
+  const lineRefs = useRef<Array<HTMLParagraphElement | null>>([]);
+
+  useEffect(() => {
+    if (activeIdx < 0) return;
+    const el = lineRefs.current[activeIdx];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [activeIdx]);
+
+  return (
+    <div className="space-y-3 text-base">
+      {lines.map((line, i) => (
+        <p
+          key={`${line.startMs}-${i}`}
+          ref={(el) => {
+            lineRefs.current[i] = el;
+          }}
+          className={`transition-all duration-300 ${
+            i === activeIdx
+              ? 'translate-x-1 text-base font-semibold text-white drop-shadow-[0_0_10px_rgba(217,70,239,0.55)]'
+              : i < activeIdx
+                ? 'text-zinc-500'
+                : 'text-zinc-400'
+          }`}
+        >
+          {line.text}
+        </p>
+      ))}
+    </div>
   );
 }

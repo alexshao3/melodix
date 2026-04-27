@@ -41,6 +41,16 @@ export class CreateTrackDto {
   @IsOptional()
   @IsString()
   peaks?: string;
+
+  /**
+   * Optional plain-text lyrics for the track. When provided alongside the
+   * audio, the admin can later trigger Aeneas auto-sync to derive an LRC.
+   * SUNO AI exposes the source lyrics on every generation page, so the
+   * upload form lets the operator paste them in directly.
+   */
+  @IsOptional()
+  @IsString()
+  lyrics?: string;
 }
 
 export class UpdateTrackDto {
@@ -59,6 +69,35 @@ export class UpdateTrackDto {
   @IsOptional()
   @IsString()
   genre?: string;
+
+  /**
+   * Plain-text lyrics. Pass an empty string to clear; omit to leave
+   * unchanged. Updating this does NOT automatically re-run alignment;
+   * the admin must explicitly POST /tracks/:id/auto-sync-lyrics to
+   * regenerate `syncedLyrics`.
+   */
+  @IsOptional()
+  @IsString()
+  lyrics?: string;
+}
+
+export class AutoSyncLyricsDto {
+  /**
+   * ISO 639-3 language code passed to Aeneas's eSpeak voice. Defaults to
+   * `eng` server-side; pass `vie` for Vietnamese, `cmn` for Mandarin, etc.
+   */
+  @IsOptional()
+  @IsString()
+  language?: string;
+
+  /**
+   * Optional override — if provided, replaces the track's stored lyrics
+   * before alignment (so the admin can fix typos without a separate save).
+   * Otherwise the existing `Track.lyrics` value is used.
+   */
+  @IsOptional()
+  @IsString()
+  lyrics?: string;
 }
 
 export class ListTracksQueryDto {
