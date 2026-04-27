@@ -40,11 +40,27 @@ async function safe<T>(path: string, fallback: T, init?: RequestInit): Promise<T
   }
 }
 
+/**
+ * Optional `?source=` filter for the public track feeds. `'all'` is the
+ * default (server-side it's expressed as the param being omitted) so a
+ * `null` / unset state never surprises a caller.
+ */
+export type SourceFilter = 'all' | 'jamendo' | 'upload';
+
+function sourceQuery(source: SourceFilter): string {
+  return source === 'all' ? '' : `&source=${source}`;
+}
+
 export const api = {
-  trending: (limit = 24) => safe<Track[]>(`/api/tracks/trending?limit=${limit}`, []),
-  newReleases: (limit = 24) => safe<Track[]>(`/api/tracks/new-releases?limit=${limit}`, []),
-  byGenre: (genre: string, limit = 24) =>
-    safe<Track[]>(`/api/tracks/genre/${encodeURIComponent(genre)}?limit=${limit}`, []),
+  trending: (limit = 24, source: SourceFilter = 'all') =>
+    safe<Track[]>(`/api/tracks/trending?limit=${limit}${sourceQuery(source)}`, []),
+  newReleases: (limit = 24, source: SourceFilter = 'all') =>
+    safe<Track[]>(`/api/tracks/new-releases?limit=${limit}${sourceQuery(source)}`, []),
+  byGenre: (genre: string, limit = 24, source: SourceFilter = 'all') =>
+    safe<Track[]>(
+      `/api/tracks/genre/${encodeURIComponent(genre)}?limit=${limit}${sourceQuery(source)}`,
+      [],
+    ),
   track: (id: string) => request<Track>(`/api/tracks/${encodeURIComponent(id)}`),
   album: (id: string) =>
     request<{ album: Album; tracks: Track[] }>(`/api/albums/${encodeURIComponent(id)}`),

@@ -5,6 +5,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MusicSourcesService } from '../music-sources/music-sources.service';
 import { normalizePeaks } from './peaks.util';
 
+/**
+ * Optional filter controlled by the `?source=` query param on the public
+ * track feeds. `undefined` keeps the original behaviour (merge every
+ * enabled source). Other `Track['source']` values (`fma`, `demo`) are
+ * deliberately not exposed on the public API today — `fma` isn't wired
+ * up and `demo` is a fallback shape, not a user-facing source.
+ */
+export type TrackSourceFilter = 'jamendo' | 'upload';
+
 @Injectable()
 export class TracksService {
   constructor(
@@ -13,66 +22,51 @@ export class TracksService {
     private readonly musicSources: MusicSourcesService,
   ) {}
 
-  async trending(limit = 24): Promise<Track[]> {
-    const [jamendoEnabled, uploadEnabled] = await Promise.all([
+  /**
+   * Resolve which sources should run for a feed call.
+   *
+   * - `filter === undefined` → every globally-enabled source contributes
+   *   (original behaviour).
+   * - `filter === 'jamendo'` / `'upload'` → only that source contributes,
+   *   and only if it's globally enabled. A request for a disabled source
+   *   yields `{ jamendo: false, upload: false }` rather than 400/404,
+   *   matching how the feeds already silently omit disabled sources.
+   */
+  private async resolveSources(filter?: TrackSourceFilter) {
+    const [jamendoGloballyEnabled, uploadGloballyEnabled] = await Promise.all([
       this.musicSources.isEnabled('jamendo'),
       this.musicSources.isEnabled('upload'),
     ]);
+    return {
+      jamendo: jamendoGloballyEnabled && (filter === undefined || filter === 'jamendo'),
+      upload: uploadGloballyEnabled && (filter === undefined || filter === 'upload'),
+    };
+  }
+
+  async trending(limit = 24, source?: TrackSourceFilter): Promise<Track[]> {
+    const { jamendo, upload } = await this.resolveSources(source);
 
     const results: Track[] = [];
-
-    if (jamendoEnabled) {
-      const tracks = await this.jamendo.getTrending(limit);
-      results.push(...tracks);
-    }
-
-    if (uploadEnabled) {
-      const uploaded = await this.getUploadedTracks(limit);
-      results.push(...uploaded);
-    }
-
+    if (jamendo) results.push(...(await this.jamendo.getTrending(limit)));
+    if (upload) results.push(...(await this.getUploadedTracks(limit)));
     return results.slice(0, limit);
   }
 
-  async newReleases(limit = 24): Promise<Track[]> {
-    const [jamendoEnabled, uploadEnabled] = await Promise.all([
-      this.musicSources.isEnabled('jamendo'),
-      this.musicSources.isEnabled('upload'),
-    ]);
+  async newReleases(limit = 24, source?: TrackSourceFilter): Promise<Track[]> {
+    const { jamendo, upload } = await this.resolveSources(source);
 
     const results: Track[] = [];
-
-    if (jamendoEnabled) {
-      const tracks = await this.jamendo.getNewReleases(limit);
-      results.push(...tracks);
-    }
-
-    if (uploadEnabled) {
-      const uploaded = await this.getUploadedTracks(limit, 'createdAt');
-      results.push(...uploaded);
-    }
-
+    if (jamendo) results.push(...(await this.jamendo.getNewReleases(limit)));
+    if (upload) results.push(...(await this.getUploadedTracks(limit, 'createdAt')));
     return results.slice(0, limit);
   }
 
-  async byGenre(genre: string, limit = 24): Promise<Track[]> {
-    const [jamendoEnabled, uploadEnabled] = await Promise.all([
-      this.musicSources.isEnabled('jamendo'),
-      this.musicSources.isEnabled('upload'),
-    ]);
+  async byGenre(genre: string, limit = 24, source?: TrackSourceFilter): Promise<Track[]> {
+    const { jamendo, upload } = await this.resolveSources(source);
 
     const results: Track[] = [];
-
-    if (jamendoEnabled) {
-      const tracks = await this.jamendo.getByGenre(genre, limit);
-      results.push(...tracks);
-    }
-
-    if (uploadEnabled) {
-      const uploaded = await this.getUploadedTracks(limit, 'createdAt', genre);
-      results.push(...uploaded);
-    }
-
+    if (jamendo) results.push(...(await this.jamendo.getByGenre(genre, limit)));
+    if (upload) results.push(...(await this.getUploadedTracks(limit, 'createdAt', genre)));
     return results.slice(0, limit);
   }
 
