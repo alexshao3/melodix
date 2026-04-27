@@ -1,6 +1,8 @@
+import type { CSSProperties } from 'react';
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
 import './globals.css';
 import { PlayerProvider } from '@/components/PlayerProvider';
 import { MiniPlayer } from '@/components/MiniPlayer';
@@ -8,8 +10,12 @@ import { TelegramSync } from '@/components/TelegramSync';
 import { MiniNav } from '@/components/MiniNav';
 import { MotionRoot } from '@/components/MotionRoot';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+// See apps/web/src/app/layout.tsx — fonts are bundled via npm to keep
+// `next build` offline-safe (ADR-0027).
+const fontVars: CSSProperties = {
+  ['--font-sans' as string]: '"Inter Variable", system-ui, sans-serif',
+  ['--font-display' as string]: '"Space Grotesk Variable", "Inter Variable", system-ui, sans-serif',
+};
 
 export const metadata: Metadata = {
   title: 'Melodix Mini',
@@ -26,7 +32,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable}`}>
+    <html lang="en" style={fontVars}>
       <body className="font-sans">
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
         <MotionRoot>

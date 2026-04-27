@@ -29,16 +29,18 @@
 
 ## Frontend
 
-|                   | Version  |
-| ----------------- | -------- |
-| Next.js           | ^15.1.3  |
-| React / React-DOM | ^19.0.0  |
-| framer-motion     | ^11.15.0 |
-| next-themes (web) | ^0.4.6   |
-| zustand (web)     | ^5.0.2   |
-| lucide-react      | ^0.469.0 |
-| clsx              | ^2.1.1   |
-| tailwind-merge    | ^2.5.5   |
+|                                    | Version  |
+| ---------------------------------- | -------- | -------------------------------------------------------------------------------------- |
+| Next.js                            | ^15.1.3  |
+| React / React-DOM                  | ^19.0.0  |
+| framer-motion                      | ^11.15.0 |
+| next-themes (web)                  | ^0.4.6   |
+| zustand (web)                      | ^5.0.2   |
+| lucide-react                       | ^0.469.0 |
+| clsx                               | ^2.1.1   |
+| tailwind-merge                     | ^2.5.5   |
+| @fontsource-variable/inter         | ^5.2.x   | Variable Inter shipped via npm (no Google Fonts fetch at build time, ADR-0027)         |
+| @fontsource-variable/space-grotesk | ^5.2.x   | Variable Space Grotesk shipped via npm (no Google Fonts fetch at build time, ADR-0027) |
 
 ## Backend
 
