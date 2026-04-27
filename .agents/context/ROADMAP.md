@@ -61,7 +61,6 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 
 - Add `eslint --fix` to the `lint-staged` chain (currently prettier-only).
 - Wire artist links from track rows (`TrackCard` row variant → `/artists/:id`).
-- Album list from artist page (Mini App + web).
 - Surface artist/album cards in Mini App search (currently shows tracks only).
 - Migrate hardcoded `text-white` / `bg-white/X` / `bg-black/X` classes to semantic Tailwind tokens (`text-fg`, `bg-surface/X`, …) so the light-mode override block in `globals.css` can shrink.
 
