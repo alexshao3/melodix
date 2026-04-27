@@ -3,6 +3,7 @@ import { Section } from '@/components/sections/Section';
 import { TrackGrid } from '@/components/sections/TrackGrid';
 import { PlaylistGrid } from '@/components/sections/PlaylistGrid';
 import { MoodPills } from '@/components/sections/MoodPills';
+import { RecommendedSection } from '@/components/sections/RecommendedSection';
 import { api } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,8 @@ export default async function HomePage() {
         <MoodPills />
       </Section>
 
+      <RecommendedSection />
+
       <Section title="Trending now" subtitle="What everyone is playing today." href="/discover">
         <TrackGrid tracks={trending} />
       </Section>
@@ -30,7 +33,11 @@ export default async function HomePage() {
         <PlaylistGrid playlists={featured} />
       </Section>
 
-      <Section title="Fresh releases" subtitle="Newest tracks added to the catalog." href="/discover">
+      <Section
+        title="Fresh releases"
+        subtitle="Newest tracks added to the catalog."
+        href="/discover"
+      >
         <TrackGrid tracks={newReleases} />
       </Section>
     </div>

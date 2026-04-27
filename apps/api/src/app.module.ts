@@ -15,6 +15,7 @@ import { UsersModule } from './users/users.module';
 import { HistoryModule } from './history/history.module';
 import { FollowsModule } from './follows/follows.module';
 import { LyricsModule } from './lyrics/lyrics.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { AdminTracksModule } from './admin-tracks/admin-tracks.module';
 import { MusicSourcesModule } from './music-sources/music-sources.module';
@@ -53,6 +54,7 @@ import { HealthController } from './health.controller';
     HistoryModule,
     FollowsModule,
     LyricsModule,
+    RecommendationsModule,
     StorageModule,
     AdminAuthModule,
     AdminTracksModule,

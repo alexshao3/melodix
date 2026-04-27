@@ -115,6 +115,16 @@ export const api = {
       { artist, title, lyrics: null, source: 'none' },
     ),
 
+  // Recommendations — `me` requires a logged-in user (uses the bearer
+  // token attached by `request`); `popular` and `similar` are public.
+  // All three return `Track[]` and degrade to `[]` on failure so the UI
+  // can render the section unconditionally.
+  recommendedForMe: (limit = 20) => safe<Track[]>(`/api/recommendations/me?limit=${limit}`, []),
+  popularRecommendations: (limit = 20) =>
+    safe<Track[]>(`/api/recommendations/popular?limit=${limit}`, []),
+  similarTracks: (trackId: string, limit = 20) =>
+    safe<Track[]>(`/api/recommendations/similar/${encodeURIComponent(trackId)}?limit=${limit}`, []),
+
   follows: () => safe<Artist[]>(`/api/me/follows`, []),
   followIds: () => safe<string[]>(`/api/me/follows/ids`, []),
   follow: (artistId: string) =>

@@ -43,7 +43,7 @@ These finish the v0 → v1 polish so the product feels complete to first-time vi
 - [x] **Waveform peaks** — generated client-side at upload via `OfflineAudioContext` (no ffmpeg / `audiowaveform` on the API container), stored as a `Json?` column on `Track`, rendered as an SVG scrubber by `packages/ui/Waveform` in both web `PlayerBar` and Mini App `MiniPlayer`. Falls back to the plain progress bar for Jamendo / demo tracks. _(shipped in PR-C; ADR-0023)_
 - [ ] **Free-Music-Archive (FMA) source** — additional public catalog. Already enumerated in `Track.source`.
 - [ ] **Server-side streaming proxy** with HTTP range support — better mobile data behaviour, gives us hooks for analytics & DRM-free transcoding.
-- [ ] **Recommendations** — start with collaborative filtering on `Like` data; later swap for a content-based vector similarity over track metadata.
+- [x] **Recommendations** — item-item collaborative filtering over `Like` data (cosine on the binary like vectors), with popularity → trending cold-start fallbacks. Three endpoints (`/me`, `/popular`, `/similar/:id`) under a 5-min Redis cache; "Made for you" (authed) / "Popular right now" (guests) section on the home page in both web and Mini App. Future content-based vector similarity over track metadata can be added as another scoring signal alongside CF. _(shipped in PR-D; ADR-0024)_
 - [ ] **Group listening** in Telegram — sync playback across N members of a chat ("Listen Together" model).
 - [ ] **Native mobile app** (React Native / Expo) — share `packages/shared` and `packages/ui` (where viable) with the web codebase.
 - [ ] **Offline mode (PWA)** — install prompt, service worker, cached track list & "downloaded" CC tracks.
