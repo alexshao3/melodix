@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Spinner } from '@melodix/ui';
 import type { Track } from '@melodix/shared';
-import { adminApi, ApiError, type MusicSource } from '@/lib/api';
+import { adminApi, ApiError, type MusicSource, type StorageInfo } from '@/lib/api';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
@@ -23,14 +23,33 @@ interface DashboardData {
   total: number;
   recent: Track[];
   sources: MusicSource[];
+  storage: StorageInfo;
 }
 
 async function loadDashboard(): Promise<DashboardData> {
-  const [tracks, sources] = await Promise.all([
+  const [tracks, sources, storage] = await Promise.all([
     adminApi.listTracks({ page: 1, limit: 5 }),
     adminApi.listSources(),
+    adminApi.storageInfo(),
   ]);
-  return { total: tracks.total, recent: tracks.items, sources };
+  return { total: tracks.total, recent: tracks.items, sources, storage };
+}
+
+const BACKEND_LABEL: Record<StorageInfo['backend'], string> = {
+  s3: 'Backblaze B2',
+  postgres: 'Postgres database',
+};
+
+const BACKEND_HINT: Record<StorageInfo['backend'], string> = {
+  s3: 'S3-compatible',
+  postgres: 'Database blob storage',
+};
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
 export default function DashboardPage() {
@@ -125,8 +144,20 @@ export default function DashboardPage() {
         <StatCard
           icon={<Database className="h-4 w-4" />}
           label="Storage backend"
-          value="Backblaze B2"
-          hint="S3-compatible"
+          value={
+            loading || !data?.storage
+              ? '—'
+              : data.storage.backend === 'postgres' && data.storage.totalBytes !== null
+                ? `${BACKEND_LABEL.postgres} · ${formatBytes(data.storage.totalBytes)}`
+                : BACKEND_LABEL[data.storage.backend]
+          }
+          hint={
+            loading || !data?.storage
+              ? 'Loading…'
+              : data.storage.backend === 'postgres' && data.storage.objectCount !== null
+                ? `${data.storage.objectCount} object${data.storage.objectCount === 1 ? '' : 's'}`
+                : BACKEND_HINT[data.storage.backend]
+          }
         />
         <StatCard
           icon={<Sparkles className="h-4 w-4" />}

@@ -5,47 +5,59 @@
 #   1. Copy .env.production.example → .env.production and fill in your values
 #   2. docker compose --env-file .env.production up -d --build
 #
+# Storage backend (STORAGE_BACKEND env var, default `s3`):
+#   - `s3`       → upload to any S3-compatible bucket (Backblaze B2, R2, …);
+#                  set the S3_* vars below.
+#   - `postgres` → store audio + cover blobs as `bytea` in the same Postgres
+#                  database. Set API_PUBLIC_URL to the public URL of the API
+#                  (the upload URLs become `${API_PUBLIC_URL}/api/storage/<key>`).
+#                  See ADR-0026.
+#
 # Cloud database / Redis:
-#   Set DATABASE_URL and REDIS_URL in .env.production to your cloud provider
-#   (e.g. Supabase, Neon, Upstash) and uncomment the local services below
-#   only if you want to run them locally instead.
+#   Local Postgres + Redis are enabled by default below (zero-config self-host).
+#   To use a cloud provider instead (Supabase, Neon, Upstash, …), set
+#   DATABASE_URL / REDIS_URL in .env.production and remove the `postgres` /
+#   `redis` services below. NOTE: the postgres backend (`STORAGE_BACKEND=postgres`)
+#   needs DB storage roughly equal to your audio library — most cloud free tiers
+#   (Neon 0.5 GB, Supabase 0.5 GB) are too small for this; prefer local
+#   Postgres or upgrade to a paid plan.
 ###############################################################################
 
 services:
   # ── Infrastructure ─────────────────────────────────────────────────
-  # Postgres disabled — using cloud database. Uncomment to use local Postgres.
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: melodix-postgres
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER:-melodix}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melodix}
-  #     POSTGRES_DB: ${POSTGRES_DB:-melodix}
-  #   volumes:
-  #     - melodix_postgres_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-melodix} -d ${POSTGRES_DB:-melodix}']
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #   ports:
-  #     - '5432:5432'
+  postgres:
+    image: postgres:16-alpine
+    container_name: melodix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-melodix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melodix}
+      POSTGRES_DB: ${POSTGRES_DB:-melodix}
+    volumes:
+      - melodix_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-melodix} -d ${POSTGRES_DB:-melodix}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # Uncomment to expose Postgres externally for debugging / migrations
+    # ports:
+    #   - '5432:5432'
 
-  # Redis disabled — using cloud Redis. Uncomment to use local Redis.
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: melodix-redis
-  #   restart: unless-stopped
-  #   volumes:
-  #     - melodix_redis_data:/data
-  #   healthcheck:
-  #     test: ['CMD', 'redis-cli', 'ping']
-  #     interval: 5s
-  #     timeout: 3s
-  #     retries: 5
-  #   ports:
-  #     - '6379:6379'
+  redis:
+    image: redis:7-alpine
+    container_name: melodix-redis
+    restart: unless-stopped
+    volumes:
+      - melodix_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    # Uncomment to expose Redis externally for debugging
+    # ports:
+    #   - '6379:6379'
 
   # ── API (NestJS + Prisma) ──────────────────────────────────────────
   api:
@@ -54,6 +66,11 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: melodix-api
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://melodix:melodix@postgres:5432/melodix?schema=public}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
@@ -61,7 +78,9 @@ services:
       JAMENDO_CLIENT_ID: ${JAMENDO_CLIENT_ID:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      # S3-compatible storage (defaults tuned for Backblaze B2)
+      # Storage backend selector: `s3` (default) or `postgres`. See ADR-0026.
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-s3}
+      # S3-compatible storage (used when STORAGE_BACKEND=s3; defaults tuned for Backblaze B2)
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       S3_REGION: ${S3_REGION:-auto}
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
@@ -69,6 +88,8 @@ services:
       S3_BUCKET: ${S3_BUCKET:-melodix}
       S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
+      # Postgres-blob storage (used when STORAGE_BACKEND=postgres)
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-}
       PORT: '4000'
       NODE_ENV: production
     # Uncomment to expose API externally for debugging
@@ -154,6 +175,6 @@ services:
       - miniapp
       - admin
 
-# volumes:
-#   melodix_postgres_data:
-#   melodix_redis_data:
+volumes:
+  melodix_postgres_data:
+  melodix_redis_data:

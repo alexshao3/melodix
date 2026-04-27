@@ -79,6 +79,14 @@ export interface AdminLoginResponse {
   admin: { id: string; username: string };
 }
 
+export interface StorageInfo {
+  backend: 's3' | 'postgres';
+  /** `null` for the S3 backend (provider console reports it). */
+  objectCount: number | null;
+  /** `null` for the S3 backend; total bytes stored in `storage_objects` for postgres. */
+  totalBytes: number | null;
+}
+
 export const adminApi = {
   login: (username: string, password: string) =>
     request<AdminLoginResponse>('/api/admin/auth/login', {
@@ -128,4 +136,6 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify({ enabled }),
     }),
+
+  storageInfo: () => request<StorageInfo>('/api/admin/storage/info'),
 };

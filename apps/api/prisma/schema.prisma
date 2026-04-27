@@ -196,3 +196,21 @@ model MusicSource {
 
   @@map("music_sources")
 }
+
+/// Database-blob storage for uploaded audio + cover files. Used when
+/// `STORAGE_BACKEND=postgres` (see ADR-0026). Keys take the form
+/// `<folder>/<uuid>.<ext>` (e.g. `tracks/abc123.mp3`). The bytes column
+/// is TOAST-stored so range reads via `substring(bytes from … for …)`
+/// only fetch the chunks they need — see StorageController.
+model StorageObject {
+  key       String   @id
+  folder    String
+  filename  String
+  mimeType  String
+  size      Int
+  bytes     Bytes
+  createdAt DateTime @default(now())
+
+  @@index([folder, createdAt])
+  @@map("storage_objects")
+}
