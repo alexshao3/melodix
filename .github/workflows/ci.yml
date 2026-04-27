@@ -39,3 +39,50 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  migrations:
+    # Catches the regression where prisma/migrations is missing or drifted from
+    # schema.prisma — the production Dockerfile runs `prisma migrate deploy` at
+    # boot, so an empty migrations folder silently produces a database without
+    # any tables (P2021 at first query). See ADR-0028.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: melodix
+          POSTGRES_PASSWORD: melodix
+          POSTGRES_DB: melodix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U melodix"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://melodix:melodix@localhost:5432/melodix?schema=public
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        run: pnpm --filter @melodix/api exec prisma migrate deploy
+
+      - name: Verify schema is in sync with migrations
+        # After `migrate deploy`, the live DB should already match schema.prisma.
+        # If it doesn't, schema.prisma was changed without a corresponding migration —
+        # someone must run `prisma migrate dev --name <slug>` and check it in.
+        run: pnpm --filter @melodix/api exec prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --exit-code

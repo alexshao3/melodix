@@ -163,6 +163,13 @@ pnpm --filter @melodix/admin dev                   # → http://localhost:3002
 4. `pnpm lint`
 5. `pnpm build`
 
+A separate `migrations` job (added in ADR-0028) spins up `postgres:16-alpine`
+as a service container and runs `prisma migrate deploy` followed by
+`prisma migrate diff --from-schema-datasource ... --to-schema-datamodel ... --exit-code`
+to guarantee the checked-in migrations actually produce a database that
+matches `schema.prisma`. This is the regression test for "Dockerfile runs
+`migrate deploy` but `prisma/migrations/` is missing or out-of-date".
+
 `.github/workflows/e2e.yml` runs in parallel with `ci.yml`. It provisions a
 `postgres:16-alpine` service container (port 5432, db/user/pass all
 `melodix`) and runs: install → `prisma:generate` → `prisma db push
