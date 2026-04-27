@@ -54,11 +54,23 @@ async function authed<T>(path: string, init?: RequestInit & { jsonBody?: unknown
   return (await res.json()) as T;
 }
 
+/** Optional `?source=` filter — `'all'` keeps the merged-feed default. */
+export type SourceFilter = 'all' | 'jamendo' | 'upload';
+
+function sourceQuery(source: SourceFilter): string {
+  return source === 'all' ? '' : `&source=${source}`;
+}
+
 export const api = {
-  trending: () => safe<Track[]>(`/api/tracks/trending?limit=20`, []),
-  newReleases: () => safe<Track[]>(`/api/tracks/new-releases?limit=20`, []),
-  byGenre: (genre: string) =>
-    safe<Track[]>(`/api/tracks/genre/${encodeURIComponent(genre)}?limit=20`, []),
+  trending: (source: SourceFilter = 'all') =>
+    safe<Track[]>(`/api/tracks/trending?limit=20${sourceQuery(source)}`, []),
+  newReleases: (source: SourceFilter = 'all') =>
+    safe<Track[]>(`/api/tracks/new-releases?limit=20${sourceQuery(source)}`, []),
+  byGenre: (genre: string, source: SourceFilter = 'all') =>
+    safe<Track[]>(
+      `/api/tracks/genre/${encodeURIComponent(genre)}?limit=20${sourceQuery(source)}`,
+      [],
+    ),
   search: (q: string) =>
     safe<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`, {
       tracks: [],
