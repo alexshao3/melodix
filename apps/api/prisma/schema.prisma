@@ -108,6 +108,10 @@ model Track {
   genre       String?
   releaseDate String?
   source      String   @default("jamendo")
+  // Pre-computed waveform peaks (~200 normalized samples in [0,1]).
+  // Generated client-side at upload via OfflineAudioContext; null for
+  // Jamendo / demo tracks that have no underlying audio buffer to decode.
+  peaks       Json?
   artistId    String
   albumId     String?
   createdAt   DateTime @default(now())

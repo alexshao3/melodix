@@ -16,6 +16,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AdminGuard } from '../admin-auth/admin.guard';
 import { AdminTracksService } from './admin-tracks.service';
 import { CreateTrackDto, UpdateTrackDto, ListTracksQueryDto } from './admin-tracks.dto';
+import { normalizePeaks } from '../tracks/peaks.util';
 
 @Controller('admin/tracks')
 @UseGuards(AdminGuard)
@@ -36,7 +37,36 @@ export class AdminTracksController {
   ) {
     const audioFile = files.audio?.[0];
     if (!audioFile) throw new BadRequestException('Audio file is required');
-    return this.adminTracks.create(dto, audioFile, files.cover?.[0]);
+
+    let peaks: number[] | undefined;
+    if (dto.peaks) {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(dto.peaks);
+      } catch {
+        throw new BadRequestException('peaks must be a JSON-encoded array of numbers');
+      }
+      const normalized = normalizePeaks(parsed);
+      if (!normalized) {
+        throw new BadRequestException(
+          'peaks must be a non-empty array of finite numbers in [0, 1]',
+        );
+      }
+      peaks = normalized;
+    }
+
+    return this.adminTracks.create(
+      {
+        title: dto.title,
+        artistName: dto.artistName,
+        albumName: dto.albumName,
+        genre: dto.genre,
+        duration: dto.duration,
+        peaks,
+      },
+      audioFile,
+      files.cover?.[0],
+    );
   }
 
   @Get()

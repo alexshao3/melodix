@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import type { Track } from '@melodix/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { normalizePeaks } from '../tracks/peaks.util';
 
 @Injectable()
 export class AdminTracksService {
@@ -17,6 +18,7 @@ export class AdminTracksService {
       albumName?: string;
       genre?: string;
       duration?: number;
+      peaks?: number[];
     },
     audioFile: Express.Multer.File,
     coverFile?: Express.Multer.File,
@@ -58,6 +60,8 @@ export class AdminTracksService {
         genre: data.genre,
         source: 'upload',
         artistId: artist.id,
+        // Stored as JSONB; we re-validate on read in `normalizePeaks`.
+        peaks: data.peaks && data.peaks.length > 0 ? data.peaks : undefined,
       },
       include: { artist: true },
     });
@@ -175,6 +179,7 @@ export class AdminTracksService {
     source: string;
     artistId: string;
     albumId: string | null;
+    peaks: unknown;
     artist: { name: string };
   }): Track {
     return {
@@ -191,6 +196,7 @@ export class AdminTracksService {
       artistName: t.artist.name,
       albumId: t.albumId,
       albumName: null,
+      peaks: normalizePeaks(t.peaks),
     };
   }
 }

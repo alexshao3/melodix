@@ -9,6 +9,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
 import { PageHeader } from '@/components/PageHeader';
 import { formatBytes } from '@/lib/format';
+import { generatePeaks } from '@/lib/peaks';
 
 export default function UploadTrackPage() {
   const router = useRouter();
@@ -76,11 +77,18 @@ export default function UploadTrackPage() {
     }
     setSubmitting(true);
     try {
+      // Decode + downsample the audio buffer to ~200 amplitude buckets so
+      // the players can render a real waveform instead of a plain bar.
+      // Failures (unsupported codec, OOM on a multi-hour track) silently
+      // fall back to no peaks — the upload itself is unaffected.
+      const peaks = await generatePeaks(audio).catch(() => null);
+
       const form = new FormData();
       form.append('title', title);
       form.append('artistName', artistName);
       if (genre) form.append('genre', genre);
       if (duration && Number.isFinite(duration)) form.append('duration', String(duration));
+      if (peaks) form.append('peaks', JSON.stringify(peaks));
       form.append('audio', audio);
       if (cover) form.append('cover', cover);
       const created = await adminApi.createTrack(form);

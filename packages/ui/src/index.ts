@@ -7,6 +7,8 @@ export { GenrePill } from './components/GenrePill';
 export { GradientButton } from './components/GradientButton';
 export { Marquee } from './components/Marquee';
 export { AudioWave } from './components/AudioWave';
+export { Waveform } from './components/Waveform';
+export type { WaveformProps } from './components/Waveform';
 export { LikeButton } from './components/LikeButton';
 export { Spinner } from './components/Spinner';
 export {

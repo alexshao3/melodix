@@ -229,9 +229,10 @@ prevent the TOCTOU race fixed in #20).
 ## `packages/ui` — shared React components
 
 `AlbumCard`, `ArtistCard`, `TrackCard`, `PlaylistCard`, `GenrePill`,
-`GradientButton`, `AudioWave`, `LikeButton`, `Marquee`, `Spinner`,
-`Skeleton`, `TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton`. Use
-these before building yours from scratch.
+`GradientButton`, `AudioWave`, `Waveform` (peaks-driven SVG scrubber, see
+ADR-0023), `LikeButton`, `Marquee`, `Spinner`, `Skeleton`,
+`TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton`. Use these before
+building yours from scratch.
 
 ## Tests
 
@@ -247,6 +248,7 @@ live next to the API surface. Today's suites:
 - `cache/cache.service.spec.ts` — `wrap()` semantics, no-op fallback.
 - `jamendo/jamendo.service.spec.ts` — DEMO_TRACKS fallback, cache integration.
 - `history/history.service.spec.ts` — record / dedup / 200-row cap / list / clear.
+- `tracks/peaks.util.spec.ts` — `normalizePeaks` validator (drops non-arrays / non-finite values, clamps to `[0, 1]`).
 - `__shared-tests__/format.spec.ts` — `formatDuration`, `formatNumber`.
 
 End-to-end specs live at the repo root in [`e2e/`](../../e2e/), driven by

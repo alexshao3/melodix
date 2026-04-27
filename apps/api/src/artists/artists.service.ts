@@ -4,6 +4,7 @@ import { JamendoService } from '../jamendo/jamendo.service';
 import { DEMO_ARTISTS } from '../jamendo/demo-data';
 import { PrismaService } from '../prisma/prisma.service';
 import { MusicSourcesService } from '../music-sources/music-sources.service';
+import { normalizePeaks } from '../tracks/peaks.util';
 
 export interface ArtistDetail {
   artist: Artist;
@@ -125,6 +126,7 @@ export class ArtistsService {
       releaseDate: t.releaseDate,
       source: t.source as Track['source'],
       externalId: t.externalId,
+      peaks: normalizePeaks(t.peaks),
     }));
 
     const albums: Album[] = row.albums.map((a) => ({
