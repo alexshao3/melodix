@@ -169,8 +169,8 @@ export class AdminTracksService {
 
   /**
    * Best-effort bulk delete. Non-existent ids and non-upload tracks are
-   * reported back as `notFound` rather than throwing; R2 delete failures
-   * are swallowed (as in `remove()`) so a single bad object never blocks
+   * reported back as `notFound` rather than throwing; object-storage
+   * delete failures are swallowed (as in `remove()`) so a single bad object never blocks
    * the whole batch. Returns the partition so the UI can surface a
    * partial-success toast.
    */

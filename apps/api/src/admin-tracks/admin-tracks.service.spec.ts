@@ -6,8 +6,8 @@ import type { StorageService } from '../storage/storage.service';
  * Unit-tests for the bulk-operation methods. The single-track
  * create/update/remove paths are covered indirectly by the existing
  * integration test surface (admin Playwright + manual flows). These
- * specs focus on the partition logic and on the "best-effort R2
- * delete" guarantee.
+ * specs focus on the partition logic and on the "best-effort
+ * object-storage delete" guarantee.
  */
 
 interface Row {
@@ -104,16 +104,16 @@ describe('AdminTracksService.bulkRemove', () => {
     expect(storage.delete).toHaveBeenCalledTimes(3);
   });
 
-  it('tolerates R2 delete failures and still removes the DB rows', async () => {
+  it('tolerates storage delete failures and still removes the DB rows', async () => {
     const { service, store, storage } = makeService([
       { id: 'a', audioUrl: 'a-audio', cover: 'a-cover', source: 'upload', genre: null },
     ]);
-    (storage.delete as jest.Mock).mockRejectedValue(new Error('R2 down'));
+    (storage.delete as jest.Mock).mockRejectedValue(new Error('storage down'));
 
     const result = await service.bulkRemove(['a']);
 
     expect(result).toEqual({ deleted: ['a'], notFound: [] });
-    expect(store.has('a')).toBe(false); // DB row gone even though R2 errored
+    expect(store.has('a')).toBe(false); // DB row gone even though storage errored
   });
 
   it('deduplicates input ids before counting notFound', async () => {

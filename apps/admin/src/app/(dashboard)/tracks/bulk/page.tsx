@@ -133,7 +133,7 @@ export default function BulkUploadPage() {
       <PageHeader
         eyebrow="Catalog"
         title="Bulk upload"
-        description="Drop multiple audio files in at once. Each will be uploaded to R2 and registered as a track. Title is taken from the filename and editable per row."
+        description="Drop multiple audio files in at once. Each will be uploaded to S3-compatible storage (Backblaze B2) and registered as a track. Title is taken from the filename and editable per row."
       />
 
       <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl sm:grid-cols-2">

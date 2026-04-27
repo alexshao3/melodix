@@ -86,7 +86,7 @@ export class ListTracksQueryDto {
 /**
  * Bulk operations cap at 200 ids per request — picked to comfortably
  * cover a "select-all on page 20-rows" flow with headroom, while keeping
- * a single batch under Postgres / R2 round-trip latency budgets.
+ * a single batch under Postgres / object-storage round-trip latency budgets.
  */
 const BULK_MAX = 200;
 

@@ -110,7 +110,7 @@ export default function UploadTrackPage() {
       <PageHeader
         eyebrow="Catalog"
         title="Upload a track"
-        description="Drop in an audio file (MP3, WAV, FLAC) plus optional cover art and metadata. The file is uploaded to Cloudflare R2 and immediately surfaces in the public catalog."
+        description="Drop in an audio file (MP3, WAV, FLAC) plus optional cover art and metadata. The file is uploaded to S3-compatible storage (Backblaze B2) and immediately surfaces in the public catalog."
       />
 
       <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[1fr_360px]">

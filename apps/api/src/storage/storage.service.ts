@@ -4,6 +4,23 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
 
+/**
+ * S3-compatible object storage. Defaults are tuned for Backblaze B2
+ * (free tier: 10 GB, no card required) but the same settings work for any
+ * S3-compatible provider (Backblaze B2, Cloudflare R2, Storj, MinIO, AWS S3…).
+ *
+ * Required env vars:
+ *   S3_ENDPOINT             e.g. https://s3.us-west-004.backblazeb2.com
+ *   S3_REGION               e.g. us-west-004 (use 'auto' for R2)
+ *   S3_ACCESS_KEY_ID        provider key id
+ *   S3_SECRET_ACCESS_KEY    provider secret
+ *   S3_BUCKET               bucket name (default: melodix)
+ *   S3_PUBLIC_URL           public base url for the bucket
+ *                           e.g. https://f004.backblazeb2.com/file/<bucket>
+ *
+ * Optional:
+ *   S3_FORCE_PATH_STYLE     'true' to force path-style URLs (rarely needed)
+ */
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
@@ -12,16 +29,21 @@ export class StorageService {
   private readonly publicUrl: string;
 
   constructor(private readonly config: ConfigService) {
-    const accountId = this.config.get<string>('R2_ACCOUNT_ID', '');
-    this.bucket = this.config.get<string>('R2_BUCKET', 'melodix');
-    this.publicUrl = this.config.get<string>('R2_PUBLIC_URL', '');
+    const endpoint = this.config.get<string>('S3_ENDPOINT', '');
+    const region = this.config.get<string>('S3_REGION', 'auto');
+    const forcePathStyle =
+      this.config.get<string>('S3_FORCE_PATH_STYLE', 'false').toLowerCase() === 'true';
+
+    this.bucket = this.config.get<string>('S3_BUCKET', 'melodix');
+    this.publicUrl = this.config.get<string>('S3_PUBLIC_URL', '');
 
     this.s3 = new S3Client({
-      region: 'auto',
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      region,
+      endpoint: endpoint || undefined,
+      forcePathStyle,
       credentials: {
-        accessKeyId: this.config.get<string>('R2_ACCESS_KEY_ID', ''),
-        secretAccessKey: this.config.get<string>('R2_SECRET_ACCESS_KEY', ''),
+        accessKeyId: this.config.get<string>('S3_ACCESS_KEY_ID', ''),
+        secretAccessKey: this.config.get<string>('S3_SECRET_ACCESS_KEY', ''),
       },
     });
   }
