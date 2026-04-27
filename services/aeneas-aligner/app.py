@@ -117,8 +117,14 @@ def align(req: AlignRequest) -> AlignResponse:
         # fragment to align. That maps 1:1 to LRC line granularity.
         text_path.write_text("\n".join(lines), encoding="utf-8")
 
+        # The Aeneas config string is `|`-delimited, so we strip every char
+        # in `req.language` that isn't a-z/0-9/_ to prevent injection of
+        # extra config keys via crafted input (the admin <select> only lets
+        # a small allowlist through, but this endpoint is also reachable
+        # by anything on the internal network).
+        safe_lang = "".join(c for c in req.language if c.isalnum() or c == "_") or "eng"
         config = (
-            f"task_language={req.language}|"
+            f"task_language={safe_lang}|"
             "is_text_type=plain|"
             "os_task_file_format=json"
         )
@@ -135,8 +141,23 @@ def align(req: AlignRequest) -> AlignResponse:
             config,
             str(out_path),
         ]
-        log.info("aligning %s lines (lang=%s, %.1fs audio)", len(lines), req.language, duration)
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        log.info(
+            "aligning %s lines (lang=%s, %.1fs audio)", len(lines), safe_lang, duration
+        )
+        # Hard timeout — if Aeneas hangs (deadlock or infinite loop on
+        # malformed audio), kill the subprocess instead of blocking the
+        # uvicorn worker forever. Aeneas runs at ~10x realtime; 600s
+        # comfortably covers even the 20-min `MAX_AUDIO_DURATION_S` cap.
+        try:
+            proc = subprocess.run(
+                cmd, capture_output=True, text=True, check=False, timeout=600
+            )
+        except subprocess.TimeoutExpired:
+            log.error("aeneas timed out after 600s; killing subprocess")
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="aeneas alignment timed out",
+            ) from None
         if proc.returncode != 0:
             log.error("aeneas failed: rc=%s stderr=%s", proc.returncode, proc.stderr[-2000:])
             raise HTTPException(
