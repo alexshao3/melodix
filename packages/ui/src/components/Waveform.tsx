@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useId, useMemo, useRef } from 'react';
 import { cn } from '../lib/cn';
 
 export interface WaveformProps {
@@ -53,6 +53,11 @@ export function Waveform({
   minBarFraction = 0.06,
 }: WaveformProps) {
   const ref = useRef<SVGSVGElement | null>(null);
+  // Each instance gets its own clipPath ids so two Waveforms on the same
+  // page don't have their `url(#...)` references collide on the first one.
+  const reactId = useId();
+  const playedClipId = `wf-clip-played-${reactId}`;
+  const restClipId = `wf-clip-rest-${reactId}`;
 
   const playedFraction = useMemo(() => {
     if (!duration || !Number.isFinite(duration)) return 0;
@@ -122,16 +127,16 @@ export function Waveform({
       style={{ height }}
     >
       <defs>
-        <clipPath id="wf-clip-played">
+        <clipPath id={playedClipId}>
           <rect x="0" y="0" width={playedX} height={vbHeight} />
         </clipPath>
-        <clipPath id="wf-clip-rest">
+        <clipPath id={restClipId}>
           <rect x={playedX} y="0" width={vbWidth - playedX} height={vbHeight} />
         </clipPath>
       </defs>
 
       {/* Unplayed bars: dim. */}
-      <g clipPath="url(#wf-clip-rest)" className="text-zinc-600">
+      <g clipPath={`url(#${restClipId})`} className="text-zinc-600">
         {peaks.map((p, i) => {
           const h = Math.max(minH, p * vbHeight);
           return (
@@ -150,7 +155,7 @@ export function Waveform({
 
       {/* Played bars: bright accent. The parent decides the color via a
           Tailwind `text-*` class. */}
-      <g clipPath="url(#wf-clip-played)">
+      <g clipPath={`url(#${playedClipId})`}>
         {peaks.map((p, i) => {
           const h = Math.max(minH, p * vbHeight);
           return (
