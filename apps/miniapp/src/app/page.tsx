@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react';
 import { GENRES } from '@melodix/shared';
 import { api } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
+import { MiniRecommendedSection } from '@/components/MiniRecommendedSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,6 +73,8 @@ export default async function MiniHome() {
           ))}
         </div>
       </section>
+
+      <MiniRecommendedSection />
 
       <section>
         <div className="mb-2 flex items-end justify-between">

@@ -121,6 +121,13 @@ export const api = {
       { artist, title, lyrics: null, source: 'none' },
     ),
 
+  // Recommendations — see ADR-0024. `me` is authed, `popular` is
+  // public; both return `Track[]` and degrade to `[]` on failure so the
+  // home rail can render the section unconditionally.
+  recommendedForMe: (limit = 20) => safe<Track[]>(`/api/recommendations/me?limit=${limit}`, []),
+  popularRecommendations: (limit = 20) =>
+    safe<Track[]>(`/api/recommendations/popular?limit=${limit}`, []),
+
   follows: () => authed<Artist[]>(`/api/me/follows`),
   followIds: () => safe<string[]>(`/api/me/follows/ids`, []),
   follow: (artistId: string) =>
