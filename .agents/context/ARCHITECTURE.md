@@ -35,6 +35,7 @@ apps/
   api/          NestJS backend, Prisma, JWT auth, Jamendo proxy
   web/          Next.js 15 main site (motion-rich)
   miniapp/      Next.js Telegram Mini App (slimmer twin)
+  admin/        Next.js admin dashboard (track CRUD, source toggle, bulk upload)
 packages/
   shared/       TypeScript domain types + API_ROUTES + helpers
   ui/           Reusable React components (cards, buttons, motion primitives)
@@ -47,6 +48,7 @@ docker-compose.dev.yml     Local dev: Postgres + Redis only (no env vars needed)
 apps/api/Dockerfile        Multi-stage NestJS + Prisma production image
 apps/web/Dockerfile        Multi-stage Next.js standalone production image
 apps/miniapp/Dockerfile    Multi-stage Next.js standalone production image
+apps/admin/Dockerfile      Multi-stage Next.js standalone production image (port 3002)
 turbo.json                 Turborepo task graph
 pnpm-workspace.yaml        Workspace globs
 ```
@@ -170,6 +172,50 @@ src/lib/
 **Constraint.** Anything DOM-specific must be guarded with
 `typeof window !== 'undefined'` — the Mini App SSR-renders inside a Telegram
 WebView whose API surface is restricted.
+
+## `apps/admin` — admin dashboard (port 3002)
+
+Next.js 15 + React 19 + Tailwind, Phase 2 of the admin system (ADR-0021). Talks
+to the Phase-1 admin API endpoints (`/api/admin/auth/*`, `/api/admin/tracks`,
+`/api/admin/sources`) using a separate JWT stored under `melodix.admin.token`
+in `localStorage` so it never collides with the public-app user token.
+
+```
+src/app/
+  layout.tsx                AuthProvider + ToastProvider + framer-motion MotionConfig
+  globals.css               admin theme tokens + .admin-input / .admin-card primitives
+  login/page.tsx            login + first-time-setup form (auto-detects 403 → switches mode)
+  (dashboard)/
+    layout.tsx              <RequireAdmin> + <AdminShell> wrapper
+    page.tsx                dashboard: stats, recent uploads, source quick-toggles
+    tracks/page.tsx         search + paginated list + edit/delete row actions
+    tracks/upload/page.tsx  single track upload (drag-drop audio + cover, metadata)
+    tracks/bulk/page.tsx    bulk upload queue (multi-file, shared artist/genre, per-row status)
+    sources/page.tsx        full source toggle list with descriptions
+src/components/
+  AuthProvider.tsx          { ready, admin, signIn, signOut } context; reads JWT payload locally
+  RequireAdmin.tsx          client-side gate that redirects to /login?next=...
+  AdminShell.tsx            sticky sidebar + mobile pill nav + sign-out card
+  PageHeader.tsx            shared page hero with aurora background
+  EditTrackDialog.tsx       PATCH /api/admin/tracks/:id (multipart cover replace)
+  ConfirmDialog.tsx         destructive-action confirm modal
+  Toast.tsx                 framer-motion-driven toast queue
+src/lib/
+  api.ts                    typed admin client (login, setup, tracks CRUD, sources toggle)
+  format.ts                 formatBytes / formatDuration / formatRelativeDate / decodeJwtPayload
+```
+
+**Auth model.** The admin token is stored in `localStorage` and decoded client-side
+_only_ to surface the username in the shell — every privileged call goes through
+the API which re-validates the JWT against `admin-jwt` strategy (ADR-0020). Logout
+just clears `localStorage` and redirects to `/login`.
+
+**Setup flow.** `/login` doubles as the first-time-setup screen: if no admin
+exists, the user clicks "First-time setup", picks a username + password, and the
+form calls `POST /api/admin/auth/setup` followed by `POST /api/admin/auth/login`.
+Once an admin exists, setup returns `403` and the form auto-switches to login
+mode with a friendly message (the API uses a `Serializable` transaction to
+prevent the TOCTOU race fixed in #20).
 
 ## `packages/shared` — types & constants
 

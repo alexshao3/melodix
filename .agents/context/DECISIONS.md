@@ -435,3 +435,48 @@ shipped empty in #6 and never gained production rows.
 **Context:** The project needs an admin panel to upload AI-generated music and toggle music sources (Jamendo on/off). Admin auth must be separate from user auth to prevent privilege escalation.
 **Decision:** Add `AdminUser` Prisma model (separate from `User`), `AdminAuthModule` with its own Passport strategy (`admin-jwt`) that validates an `isAdmin: true` claim. Upload storage uses Cloudflare R2 via the S3-compatible `@aws-sdk/client-s3` SDK. `MusicSource` table tracks enabled/disabled state per source, checked at query time by `TracksService` and `SearchService`. Uploaded tracks reuse the existing `Track`/`Artist` models with `source: 'upload'`.
 **Consequences:** Admin tokens are interchangeable with user tokens at the JWT level (same secret) but carry an `isAdmin` flag validated by `AdminGuard`. R2 requires 4 new env vars (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_PUBLIC_URL`). Toggling a source off removes its tracks from all browse/search results without deleting data.
+
+## ADR-0021 · Admin dashboard as a separate Next.js app on port 3002
+
+**Date:** 2026-04-27
+**Status:** accepted
+**Context:** Phase 1 (#19, #20) shipped the admin API surface (`/api/admin/*`)
+behind a separate `admin-jwt` strategy with a one-time `/setup` flow. We need
+a UI for it that supports auth, track CRUD, single + bulk upload, and source
+toggling. Three options were considered: (a) embed admin pages inside
+`apps/web` behind a route group, (b) add a `/admin` route group inside
+`apps/miniapp`, or (c) ship a third Next.js app at `apps/admin/`.
+**Decision:** Option (c). The admin app lives at `apps/admin` on port 3002
+with its own Dockerfile and docker-compose service, follows the same
+`@melodix/shared` + `@melodix/ui` workspace pattern as `web`/`miniapp`, and
+talks to the existing `/api/admin/*` endpoints with no API changes. Admin
+JWT is stored under a **distinct** localStorage key (`melodix.admin.token`)
+so the public app's `melodix.token` is never coerced into admin context. The
+`/login` route doubles as first-time setup — if `POST /api/admin/auth/setup`
+returns `403`, the form auto-flips to login mode (the `Serializable`
+transaction added in #20 makes the race-free). Authenticated pages live
+under a `(dashboard)` route group whose layout wraps `<RequireAdmin>` (a
+client gate that reads the JWT payload and redirects to `/login?next=...`).
+**Consequences.**
+
+- **Pros.** Clear blast-radius isolation: admin code can never accidentally
+  surface in the public bundle, and the admin token can't be lifted by web
+  user-JS that scans `melodix.token`. Future admin-only deps (analytics
+  dashboards, large editors) won't bloat the public-app bundle. Bulk upload
+  can use Browser-only APIs (`crypto.randomUUID`, `URL.createObjectURL`)
+  without DOM-guarding for the Mini App's WebView. Deployable behind its
+  own Cloudflare hostname (`admin.<domain>`) for an extra access-control
+  boundary.
+- **Cons.** Three extra files duplicated from `apps/web`'s scaffold
+  (`tsconfig`, `next.config.mjs`, `tailwind.config.ts`, eslint config),
+  one more Docker stage to keep aligned, and one more port to remember.
+  Mitigated by copying the existing `apps/web` config verbatim — when web
+  bumps Next.js, admin bumps the same way.
+- **Why not embed in `apps/web`?** Would couple admin shipping cadence to
+  the public app's, leak admin chunk paths into the public route manifest,
+  and force every Mini App / public-web reviewer to also reason about admin
+  flows. Not worth the saved scaffolding.
+- **Why not a server-action-backed admin route group?** The Phase-1 API is
+  already well-typed and tested; rewriting it as Next.js server actions
+  would duplicate validation logic and lose the Mini App / future CLI
+  reuse path.
