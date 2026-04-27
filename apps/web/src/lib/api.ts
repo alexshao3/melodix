@@ -49,7 +49,9 @@ export const api = {
   album: (id: string) =>
     request<{ album: Album; tracks: Track[] }>(`/api/albums/${encodeURIComponent(id)}`),
   artist: (id: string) =>
-    request<{ artist: Artist; tracks: Track[] }>(`/api/artists/${encodeURIComponent(id)}`),
+    request<{ artist: Artist; tracks: Track[]; albums: Album[] }>(
+      `/api/artists/${encodeURIComponent(id)}`,
+    ),
   search: (q: string) =>
     safe<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`, {
       tracks: [],

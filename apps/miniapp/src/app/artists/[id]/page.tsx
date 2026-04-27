@@ -1,5 +1,6 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { User } from 'lucide-react';
+import { Disc3, User } from 'lucide-react';
 import { formatNumber } from '@melodix/shared';
 import { api } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
@@ -15,7 +16,7 @@ export default async function MiniArtist({ params }: PageProps) {
   const { id } = await params;
   const data = await api.artist(id);
   if (!data) notFound();
-  const { artist, tracks } = data;
+  const { artist, tracks, albums } = data;
   const topTracks = tracks.slice(0, 12);
 
   return (
@@ -60,6 +61,37 @@ export default async function MiniArtist({ params }: PageProps) {
           ))}
         </div>
       </div>
+
+      {albums.length > 0 && (
+        <div>
+          <div className="mb-2 px-2 text-[11px] uppercase tracking-widest text-zinc-400">
+            Discography
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {albums.map((album) => (
+              <Link
+                key={album.id}
+                href={`/albums/${album.id}`}
+                className="group flex flex-col gap-1.5 rounded-xl bg-white/[0.04] p-2 transition-colors active:bg-white/[0.08]"
+              >
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gradient-to-br from-cyan-500/30 to-fuchsia-600/30">
+                  {album.cover ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={album.cover} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Disc3 className="h-6 w-6 text-white/70" />
+                    </div>
+                  )}
+                </div>
+                <div className="truncate px-0.5 text-[11px] font-semibold text-white">
+                  {album.name}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
