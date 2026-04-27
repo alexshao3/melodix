@@ -83,6 +83,8 @@ export class SearchService {
       albumId: t.albumId,
       albumName: null,
       peaks: normalizePeaks(t.peaks),
+      lyrics: t.lyrics,
+      syncedLyrics: t.syncedLyrics,
     }));
   }
 }

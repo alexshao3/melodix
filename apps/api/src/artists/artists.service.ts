@@ -127,6 +127,8 @@ export class ArtistsService {
       source: t.source as Track['source'],
       externalId: t.externalId,
       peaks: normalizePeaks(t.peaks),
+      lyrics: t.lyrics,
+      syncedLyrics: t.syncedLyrics,
     }));
 
     const albums: Album[] = row.albums.map((a) => ({
