@@ -139,7 +139,7 @@ function EditableMiniRow({ track, tracks, busy, onDragSettle, onRemove }: Editab
       </button>
       <div className="min-w-0 flex-1">
         <div
-          className={cn('truncate text-sm font-semibold', active ? 'text-cyan-300' : 'text-white')}
+          className={cn('truncate text-sm font-semibold', active ? 'text-accent' : 'text-white')}
         >
           {track.title}
         </div>
@@ -152,7 +152,7 @@ function EditableMiniRow({ track, tracks, busy, onDragSettle, onRemove }: Editab
         type="button"
         onClick={onRemove}
         disabled={busy}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-rose-500/10 active:text-rose-300 disabled:opacity-30"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors active:bg-accent-soft active:text-accent disabled:opacity-30"
         aria-label={`Remove ${track.title} from playlist`}
       >
         <Trash2 className="h-4 w-4" />

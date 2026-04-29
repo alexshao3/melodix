@@ -181,11 +181,11 @@ function EditableTrackRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span
-            className={`truncate text-sm font-medium ${isCurrent ? 'text-cyan-300' : 'text-white'}`}
+            className={`truncate text-sm font-medium ${isCurrent ? 'text-accent' : 'text-white'}`}
           >
             {track.title}
           </span>
-          {isPlaying && <AudioWave className="text-cyan-300" />}
+          {isPlaying && <AudioWave className="text-accent" />}
         </div>
         <div className="truncate text-xs text-zinc-400">
           <Link href={`/artists/${track.artistId}`} className="hover:text-zinc-200 hover:underline">
@@ -219,7 +219,7 @@ function EditableTrackRow({
           type="button"
           onClick={onRemove}
           disabled={busy}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-300 disabled:opacity-30"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-accent-soft hover:text-accent disabled:opacity-30"
           aria-label={`Remove ${track.title} from playlist`}
         >
           <Trash2 className="h-4 w-4" />

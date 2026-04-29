@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Heart, History, ListMusic, Plus, Sparkles, UserPlus } from 'lucide-react';
+import { Heart, History, ListMusic, Plus, UserPlus } from 'lucide-react';
 import { Section } from '@/components/sections/Section';
 import { TrackList } from '@/components/sections/TrackList';
 import { ArtistCard, GradientButton, PlaylistCard, Spinner } from '@melodix/ui';
@@ -61,14 +61,17 @@ export default function LibraryPage() {
 
   return (
     <div>
-      <header className="relative mt-2 overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-rose-500/20 via-fuchsia-500/15 to-cyan-500/20 px-6 py-10 sm:px-10">
-        <div
-          aria-hidden
-          className="aurora animate-gradient-pan absolute inset-0 -z-10 opacity-50"
-        />
+      <header
+        className="relative mt-2 overflow-hidden rounded-3xl border border-white/5 px-6 py-10 sm:px-10"
+        style={{ background: 'var(--surface-1)' }}
+      >
+        <div aria-hidden className="aurora absolute inset-0 -z-10 opacity-40" />
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 backdrop-blur">
-            <Heart className="h-5 w-5 fill-rose-400 text-rose-400" />
+          <span
+            className="flex h-10 w-10 items-center justify-center rounded-2xl backdrop-blur"
+            style={{ background: 'var(--accent-soft)' }}
+          >
+            <Heart className="h-5 w-5 fill-current text-accent" />
           </span>
           <h1 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Your library
@@ -93,8 +96,7 @@ export default function LibraryPage() {
 
       {authed === false && (
         <div className="mt-10 flex flex-col items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <div className="flex items-center gap-2 text-sm text-zinc-300">
-            <Sparkles className="h-4 w-4 text-cyan-300" />
+          <div className="text-sm text-zinc-300">
             Sign in to save likes & playlists across devices.
           </div>
           <Link href="/login">
@@ -122,7 +124,7 @@ export default function LibraryPage() {
                 <button
                   type="button"
                   onClick={() => setCreateOpen(true)}
-                  className="font-medium text-cyan-300 underline-offset-4 hover:underline"
+                  className="font-medium text-accent underline-offset-4 hover:underline"
                 >
                   New playlist
                 </button>{' '}
@@ -142,7 +144,7 @@ export default function LibraryPage() {
           <Section
             title="Liked songs"
             subtitle={`${likes.length} ${likes.length === 1 ? 'track' : 'tracks'}`}
-            icon={<Heart className="h-4 w-4 fill-rose-400 text-rose-400" />}
+            icon={<Heart className="h-4 w-4 fill-current text-accent" />}
           >
             {likes.length === 0 ? (
               <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-zinc-400">

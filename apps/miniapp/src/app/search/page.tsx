@@ -32,7 +32,7 @@ export default function MiniSearch() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Songs, artists, albums…"
-          className="w-full rounded-2xl border border-white/10 bg-black/40 px-11 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-cyan-400/40 focus:outline-none"
+          className="w-full rounded-2xl border border-white/10 bg-black/40 px-11 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-[color:var(--accent-line)] focus:outline-none"
         />
       </label>
       {data.tracks.length > 0 && (
@@ -46,7 +46,9 @@ export default function MiniSearch() {
         </section>
       )}
       {q.trim() && data.tracks.length === 0 && (
-        <div className="mt-8 text-center text-sm text-zinc-400">No results yet — try another query.</div>
+        <div className="mt-8 text-center text-sm text-zinc-400">
+          No results yet — try another query.
+        </div>
       )}
     </div>
   );

@@ -5,13 +5,19 @@ import { cn } from '../lib/cn';
 
 export interface GenrePillProps {
   label: string;
-  color: string;
+  /**
+   * Legacy mood-gradient class (e.g. `from-pink-500 to-rose-500`). Kept on
+   * the API for back-compat with `GENRES.color`, but the Build re-skin no
+   * longer renders these multi-stop gradients — chips are now type-led
+   * with a single coral active state. The prop is ignored at runtime.
+   */
+  color?: string;
   active?: boolean;
   onClick?: () => void;
   index?: number;
 }
 
-export function GenrePill({ label, color, active = false, onClick, index }: GenrePillProps) {
+export function GenrePill({ label, active = false, onClick, index }: GenrePillProps) {
   return (
     <motion.button
       type="button"
@@ -19,16 +25,15 @@ export function GenrePill({ label, color, active = false, onClick, index }: Genr
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: (index ?? 0) * 0.02 }}
-      whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.96 }}
       className={cn(
-        'relative overflow-hidden rounded-full px-5 py-2 text-sm font-medium transition-all',
-        'bg-gradient-to-r text-white shadow-lg',
-        color,
-        active ? 'ring-2 ring-white/60' : 'opacity-90 hover:opacity-100',
+        'relative rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+        active
+          ? 'border-[color:var(--accent-line)] bg-accent-soft text-accent'
+          : 'border-[color:var(--hairline)] bg-transparent text-zinc-300 hover:border-[color:var(--hairline-strong)] hover:text-white',
       )}
     >
-      <span className="relative z-10">{label}</span>
+      {label}
     </motion.button>
   );
 }

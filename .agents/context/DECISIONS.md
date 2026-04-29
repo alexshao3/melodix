@@ -630,3 +630,76 @@ The alternative — WhisperX — was rejected because it would re-transcribe
 lyrics we already have exactly, introducing ASR error on artist names, slang,
 and stylised vocals; forced alignment is the right tool when the text is
 already known to be correct.
+
+## ADR-0031 · Build re-skin — oklch tokens, single coral accent, type-led nav
+
+**Status:** Accepted (2026-04-29).
+**Context:** A design+perf audit (saved at `/home/ubuntu/reports/melodix-
+design-perf-review.md`) scored Melodix 5.4/10 against the huashu-design
+methodology. The biggest issues were: a triadic cyan→fuchsia→rose gradient
+applied in 7+ places (progress bar, hero text, visualizer, logo, CTA, …);
+no real brand asset (the "logo" was a lucide `Sparkles` in a gradient box);
+nine independent animations running simultaneously on the hero with no
+narrative arc; filler "600K+ · ∞ · 100%" stats; and a Tailwind config that
+declared a `brand.*` palette which was never actually used (components
+reached for raw `cyan/fuchsia/rose/zinc` instead). Batch A+B (PR #35) had
+already cleaned up the rendering side. Batch C (this PR) is the design
+re-skin itself.
+
+**Decision:**
+
+- **Direction:** "Build" (London-studio aesthetic) — type-led, single
+  chromatic accent, grid discipline. Rejected "Takram" (data-heavy, wrong
+  for a music product) and "Locomotive" (too kinetic, would have re-introduced
+  the very motion overload Batch A killed).
+- **Token system:** every surface and ink colour in `apps/web/src/app/
+globals.css` (mirrored verbatim into `apps/miniapp/src/app/globals.css`)
+  is now an oklch tuple, defined once on `:root` and overridden once on
+  `:root.light`. The accent is `oklch(0.66 0.26 27)` (≈ `#ff3d4f`, a warm
+  coral). Tailwind in both apps exposes the vars as semantic utilities
+  (`bg-surface-1`, `text-accent`, `border-hairline`, …).
+- **Type voice:** Fraunces Variable for display (with the SOFT and WONK
+  axes used on the one accent word in the hero), Inter Variable for body.
+  Bundled via `@fontsource-variable` so `next build` stays offline-safe
+  per ADR-0027. The miniapp dropped Space Grotesk to keep the two surfaces
+  on the same display face.
+- **Brand assets:** new `<Wordmark>` (lowercase Fraunces "melodix" with one
+  coral mark stop) and `<Monomark>` (32×32 SVG, deep-ink "M" cut into a
+  coral rounded square) live in `packages/ui/src/brand/Wordmark.tsx`. The
+  marks consume `var(--accent-bg)` / `var(--accent-fg)` so they re-skin
+  with the theme. Every `Sparkles`-in-gradient-box placeholder was deleted.
+- **Motion narrative:** the hero follows Slow → Fast → Boom → Stop. Headline
+  - body fade up at 0–0.6 s, the CTAs slide in at 0.4–0.9 s, the
+    `OrbitingCovers` cluster scale-pops once at 1.1–1.65 s with `easeOutExpo`,
+    then nothing else moves for the lifetime of the page. The previous
+    spinning rainbow blur and infinite y-bob on the floating covers are gone.
+- **Single accent:** every cyan/fuchsia/rose/violet/emerald colour usage
+  in `apps/web/src`, `apps/miniapp/src`, and `packages/ui/src` was replaced
+  with the coral accent token (or with a neutral surface where the colour
+  was decorative). The `GenrePill` no longer renders the per-genre
+  `from-* to-*` gradient classes — pills are hairline-outlined chips with
+  a coral active state.
+- **Filler stats and decorative icons:** the "600K+ · ∞ · 100%" strip and
+  the "AI-curated" Sparkles badge on the hero are gone. The sidebar /
+  mobile-nav / top-bar nav labels are now type-only with a coral indicator
+  on the active item.
+
+**Consequences:**
+
+- The `.light` patch block in `apps/web/src/app/globals.css` stays for now.
+  A long tail of components still reach for raw `text-white` /
+  `bg-white/X` / `bg-black/X`; re-coding all of them onto semantic tokens
+  is a multi-PR refactor and would have inflated this PR past review size.
+  The override layer keeps the theme toggle usable today and a future PR
+  can delete it once the migration finishes.
+- The `GENRES.color` field in `packages/shared/src/constants.ts` is still
+  shipped for back-compat with anything outside the monorepo (admin app,
+  external embeds), but the in-repo consumers all ignore it now.
+- The `GradientButton` name is misleading post-re-skin — its primary
+  variant is now solid coral. Name kept for back-compat to avoid touching
+  every call-site; a follow-up can rename it to `BrandButton` and
+  re-export the old name as a deprecated alias.
+- Pre-existing `apps/api` typecheck errors (TS7006 on a handful of Prisma
+  callback parameters) are unrelated to this PR; they only surface when
+  `prisma generate` has not been run locally. CI runs `prisma generate`
+  before `pnpm typecheck`, so the build remains green.

@@ -2,7 +2,11 @@ import type { CSSProperties } from 'react';
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import '@fontsource-variable/inter';
-import '@fontsource-variable/space-grotesk';
+// Fraunces Variable carries the SOFT and WONK axes; we use them for the
+// hero accent word so the Mini App matches the Build display voice in
+// `apps/web`. Space Grotesk is no longer the display face but kept off the
+// import path to drop ~25 kB of unused webfont payload.
+import '@fontsource-variable/fraunces';
 import './globals.css';
 import { PlayerProvider } from '@/components/PlayerProvider';
 import { MiniPlayer } from '@/components/MiniPlayer';
@@ -14,7 +18,7 @@ import { MotionRoot } from '@/components/MotionRoot';
 // `next build` offline-safe (ADR-0027).
 const fontVars: CSSProperties = {
   ['--font-sans' as string]: '"Inter Variable", system-ui, sans-serif',
-  ['--font-display' as string]: '"Space Grotesk Variable", "Inter Variable", system-ui, sans-serif',
+  ['--font-display' as string]: '"Fraunces Variable", ui-serif, Georgia, serif',
 };
 
 export const metadata: Metadata = {

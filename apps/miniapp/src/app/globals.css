@@ -4,14 +4,34 @@
 
 :root {
   color-scheme: dark;
-  /* Telegram WebApp injects these CSS variables; provide sensible defaults */
+  /* Telegram WebApp injects these CSS variables; provide sensible defaults.
+   * The link / button defaults are set to the Melodix brand coral so the
+   * native Telegram chrome (e.g. the MainButton) inherits the new accent
+   * when the WebApp is opened outside of a Telegram client. */
   --tg-theme-bg-color: #0a0a0e;
   --tg-theme-secondary-bg-color: #14141c;
   --tg-theme-text-color: #ffffff;
   --tg-theme-hint-color: #8a8a93;
-  --tg-theme-link-color: #22d3ee;
-  --tg-theme-button-color: #22d3ee;
-  --tg-theme-button-text-color: #000000;
+  --tg-theme-link-color: #ff3d4f;
+  --tg-theme-button-color: #ff3d4f;
+  --tg-theme-button-text-color: #1a1a1d;
+
+  /* Shared design-system tokens. Keep in sync with `apps/web/src/app/
+   * globals.css` so packages/ui components render identically. */
+  --surface-0: oklch(0.16 0.005 286);
+  --surface-1: oklch(0.20 0.005 286);
+  --surface-2: oklch(0.24 0.005 286);
+  --surface-3: oklch(0.28 0.006 286);
+  --hairline: oklch(0.97 0.005 286 / 0.06);
+  --hairline-strong: oklch(0.97 0.005 286 / 0.12);
+  --ink-1: oklch(0.97 0.005 286);
+  --ink-2: oklch(0.72 0.008 286);
+  --ink-3: oklch(0.50 0.010 286);
+  --accent-bg: oklch(0.66 0.26 27);
+  --accent-bg-hover: oklch(0.71 0.26 27);
+  --accent-fg: oklch(0.16 0.005 286);
+  --accent-soft: oklch(0.66 0.26 27 / 0.16);
+  --accent-line: oklch(0.66 0.26 27 / 0.40);
 }
 
 * {
@@ -25,12 +45,14 @@ body {
 }
 
 body {
+  /* Quiet near-black with one soft coral pool in the upper-right.
+   * Replaced the fuchsia + cyan double-pool from the previous design
+   * pass — single accent, no triad. */
   background-image: radial-gradient(
-      700px 500px at 80% -10%,
-      rgba(217, 70, 239, 0.15),
-      transparent 60%
-    ),
-    radial-gradient(500px 400px at -10% 10%, rgba(34, 211, 238, 0.15), transparent 60%);
+    700px 500px at 88% -8%,
+    oklch(0.66 0.26 27 / 0.10),
+    transparent 60%
+  );
   background-attachment: fixed;
   min-height: 100dvh;
 }
@@ -57,11 +79,10 @@ body {
   }
 }
 
-.text-gradient {
-  background: linear-gradient(120deg, #67e8f9 0%, #d946ef 50%, #f43f5e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Brand accent — solid coral. Replaces the old cyan→fuchsia→rose
+ * `.text-gradient` after the Build re-skin. */
+.text-accent {
+  color: var(--accent-bg);
 }
 
 .no-scrollbar::-webkit-scrollbar {

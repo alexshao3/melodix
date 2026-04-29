@@ -64,8 +64,8 @@ export function PlayerBar() {
             {/* Progress bar (top edge) */}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px overflow-hidden rounded-t-2xl">
               <div
-                className="h-full bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-rose-400 transition-[width] duration-200"
-                style={{ width: `${pct}%` }}
+                className="h-full transition-[width] duration-200"
+                style={{ width: `${pct}%`, background: 'var(--accent-bg)' }}
               />
             </div>
 
@@ -81,10 +81,14 @@ export function PlayerBar() {
                     className="object-cover"
                   />
                 ) : null}
+                {/* Subtle coral overlay pulses while playing as a single
+                 * "now playing" cue; flat tint when paused. The previous
+                 * fuchsia/cyan blend pulled a second hue into the chrome. */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-tr from-fuchsia-500/30 to-cyan-400/30 mix-blend-overlay"
-                  animate={{ opacity: isPlaying ? [0.2, 0.6, 0.2] : 0.2 }}
-                  transition={{ repeat: Infinity, duration: 2.4 }}
+                  className="absolute inset-0 mix-blend-overlay"
+                  style={{ background: 'var(--accent-soft)' }}
+                  animate={{ opacity: isPlaying ? [0.4, 0.85, 0.4] : 0.25 }}
+                  transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
                 />
               </div>
               <div className="min-w-0 flex-1">
@@ -104,7 +108,7 @@ export function PlayerBar() {
                   aria-label="Shuffle"
                   className={cn(
                     'hidden h-9 w-9 items-center justify-center rounded-full transition-colors sm:flex',
-                    shuffle ? 'text-emerald-400' : 'text-zinc-400 hover:text-white',
+                    shuffle ? 'text-accent' : 'text-zinc-400 hover:text-white',
                   )}
                 >
                   <Shuffle className="h-4 w-4" />
@@ -145,7 +149,7 @@ export function PlayerBar() {
                   aria-label="Repeat"
                   className={cn(
                     'hidden h-9 w-9 items-center justify-center rounded-full transition-colors sm:flex',
-                    repeat !== 'off' ? 'text-emerald-400' : 'text-zinc-400 hover:text-white',
+                    repeat !== 'off' ? 'text-accent' : 'text-zinc-400 hover:text-white',
                   )}
                 >
                   {repeat === 'one' ? (
@@ -175,7 +179,7 @@ export function PlayerBar() {
                       setScrubValue(null);
                     }}
                     height={36}
-                    className="text-fuchsia-400"
+                    className="text-accent"
                   />
                 ) : (
                   <input
@@ -212,7 +216,7 @@ export function PlayerBar() {
                 title="Lyrics"
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 hover:text-white',
-                  lyricsOpen && 'text-fuchsia-400',
+                  lyricsOpen && 'text-accent',
                 )}
               >
                 <Mic2 className="h-4 w-4" />

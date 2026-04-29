@@ -26,7 +26,7 @@ export function MiniPlayer() {
           className="fixed inset-x-3 bottom-[76px] z-30 overflow-hidden rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-2xl"
         >
           <div
-            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-rose-400 origin-left"
+            className="absolute inset-x-0 top-0 h-px bg-accent origin-left"
             style={{ transform: `scaleX(${pct / 100})` }}
           />
           <div className="flex items-center gap-3 p-3">
@@ -86,7 +86,7 @@ export function MiniPlayer() {
                 duration={safeDuration}
                 onSeek={(s) => seek(s)}
                 height={28}
-                className="text-cyan-400"
+                className="text-accent"
               />
             ) : (
               <input

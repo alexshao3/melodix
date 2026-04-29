@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
-import { GradientButton } from '@melodix/ui';
+import { GradientButton, Monomark, Wordmark } from '@melodix/ui';
 import { api } from '@/lib/api';
 
 export default function LoginPage() {
@@ -37,18 +36,18 @@ export default function LoginPage() {
   return (
     <div className="mx-auto mt-10 w-full max-w-md">
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl">
-        <div aria-hidden className="aurora animate-gradient-pan absolute inset-0 -z-10 opacity-40" />
+        <div aria-hidden className="aurora absolute inset-0 -z-10 opacity-40" />
         <div className="mb-6 flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-rose-500">
-            <Sparkles className="h-4 w-4 text-white" />
-          </span>
-          <span className="font-display text-xl font-bold tracking-tight text-white">Melodix</span>
+          <Monomark className="h-9 w-9" />
+          <Wordmark className="text-xl text-white" />
         </div>
         <h1 className="font-display text-2xl font-bold text-white">
           {mode === 'login' ? 'Welcome back' : 'Create your account'}
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
-          {mode === 'login' ? 'Sign in to continue your sound journey.' : 'Sign up to save likes and playlists.'}
+          {mode === 'login'
+            ? 'Sign in to continue your sound journey.'
+            : 'Sign up to save likes and playlists.'}
         </p>
 
         <form className="mt-6 flex flex-col gap-3" onSubmit={submit}>
@@ -59,15 +58,17 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               type="email"
               placeholder="Email"
-              className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-cyan-400/40 focus:outline-none"
+              className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-[color:var(--accent-line)] focus:outline-none"
             />
           )}
           <input
             required
             value={mode === 'login' ? email : username}
-            onChange={(e) => (mode === 'login' ? setEmail(e.target.value) : setUsername(e.target.value))}
+            onChange={(e) =>
+              mode === 'login' ? setEmail(e.target.value) : setUsername(e.target.value)
+            }
             placeholder={mode === 'login' ? 'Email or username' : 'Username'}
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-cyan-400/40 focus:outline-none"
+            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-[color:var(--accent-line)] focus:outline-none"
           />
           <input
             required
@@ -76,9 +77,9 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             type="password"
             placeholder="Password"
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-cyan-400/40 focus:outline-none"
+            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-[color:var(--accent-line)] focus:outline-none"
           />
-          {error && <div className="text-xs text-rose-400">{error}</div>}
+          {error && <div className="text-xs text-accent">{error}</div>}
           <GradientButton type="submit" size="md" disabled={loading}>
             {loading ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </GradientButton>
@@ -89,7 +90,9 @@ export default function LoginPage() {
           onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
           className="mt-4 w-full text-center text-xs text-zinc-400 hover:text-white"
         >
-          {mode === 'login' ? "Don't have an account? Create one" : 'Already have an account? Sign in'}
+          {mode === 'login'
+            ? "Don't have an account? Create one"
+            : 'Already have an account? Sign in'}
         </button>
       </div>
     </div>
