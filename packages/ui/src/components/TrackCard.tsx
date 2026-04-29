@@ -39,9 +39,9 @@ export function TrackCard({
         <div className="flex w-6 shrink-0 items-center justify-center text-xs text-zinc-500">
           {isPlaying ? (
             <span className="flex h-3 items-end gap-[2px]">
-              <span className="h-1 w-[2px] animate-pulse bg-emerald-400" />
-              <span className="h-3 w-[2px] animate-pulse bg-emerald-400 [animation-delay:0.15s]" />
-              <span className="h-2 w-[2px] animate-pulse bg-emerald-400 [animation-delay:0.3s]" />
+              <span className="h-1 w-[2px] animate-pulse bg-accent" />
+              <span className="h-3 w-[2px] animate-pulse bg-accent [animation-delay:0.15s]" />
+              <span className="h-2 w-[2px] animate-pulse bg-accent [animation-delay:0.3s]" />
             </span>
           ) : (
             <>
@@ -64,10 +64,7 @@ export function TrackCard({
         </div>
         <div className="min-w-0 flex-1">
           <div
-            className={cn(
-              'truncate text-sm font-medium',
-              isActive ? 'text-emerald-400' : 'text-white',
-            )}
+            className={cn('truncate text-sm font-medium', isActive ? 'text-accent' : 'text-white')}
           >
             {track.title}
           </div>
@@ -105,7 +102,7 @@ export function TrackCard({
             opacity: isActive ? 1 : 0,
             scale: isActive ? 1 : 0.8,
           }}
-          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-black shadow-lg shadow-emerald-500/30"
+          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-accent text-[color:var(--accent-fg)] shadow-lg shadow-black/40"
         >
           {isPlaying ? (
             <Pause className="h-5 w-5 fill-current" />
@@ -113,7 +110,7 @@ export function TrackCard({
             <Play className="h-5 w-5 fill-current" />
           )}
         </motion.span>
-        <span className="absolute right-3 top-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-emerald-500 text-black opacity-0 shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+        <span className="absolute right-3 top-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-accent text-[color:var(--accent-fg)] opacity-0 shadow-lg shadow-black/40 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <Play className="h-5 w-5 fill-current" />
         </span>
       </div>

@@ -20,7 +20,7 @@ export function LikeButton({ liked = false, onToggle, size = 20, className }: Li
       whileHover={{ scale: 1.08 }}
       className={cn(
         'inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors',
-        liked ? 'text-rose-500' : 'text-zinc-400 hover:text-white',
+        liked ? 'text-accent' : 'text-zinc-400 hover:text-white',
         className,
       )}
       aria-pressed={liked}

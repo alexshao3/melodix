@@ -24,7 +24,7 @@ export default async function MiniArtist({ params }: PageProps) {
     <div className="flex flex-col gap-5">
       <header className="relative overflow-hidden rounded-2xl bg-white/[0.04] p-4">
         <div className="flex items-center gap-3">
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-violet-600 to-cyan-500">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[color:var(--surface-2)]">
             {artist.image ? (
               <Image
                 src={artist.image}
@@ -81,7 +81,7 @@ export default async function MiniArtist({ params }: PageProps) {
                 href={`/albums/${album.id}`}
                 className="group flex flex-col gap-1.5 rounded-xl bg-white/[0.04] p-2 transition-colors active:bg-white/[0.08]"
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gradient-to-br from-cyan-500/30 to-fuchsia-600/30">
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-[color:var(--surface-2)]">
                   {album.cover ? (
                     <Image
                       src={album.cover}

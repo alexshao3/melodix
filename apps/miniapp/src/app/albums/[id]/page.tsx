@@ -22,7 +22,7 @@ export default async function MiniAlbum({ params }: PageProps) {
     <div className="flex flex-col gap-5">
       <header className="relative overflow-hidden rounded-2xl bg-white/[0.04] p-4">
         <div className="flex items-center gap-3">
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-600">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[color:var(--surface-2)]">
             {album.cover ? (
               <Image src={album.cover} alt="" fill sizes="80px" priority className="object-cover" />
             ) : (

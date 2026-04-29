@@ -86,7 +86,7 @@ export function FollowButton({ artistId }: FollowButtonProps) {
         aria-label="Unfollow"
         className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/[0.12]"
       >
-        <Heart className="h-4 w-4 fill-current text-rose-400" />
+        <Heart className="h-4 w-4 fill-current text-accent" />
         Following
       </button>
     );

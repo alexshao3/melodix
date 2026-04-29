@@ -37,10 +37,7 @@ export default async function DiscoverPage({ searchParams }: PageProps) {
   return (
     <div>
       <header className="relative mt-2 overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] px-6 py-10 sm:px-10">
-        <div
-          aria-hidden
-          className="aurora animate-gradient-pan absolute inset-0 -z-10 opacity-50"
-        />
+        <div aria-hidden className="aurora absolute inset-0 -z-10 opacity-50" />
         <h1 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
           Discover
         </h1>

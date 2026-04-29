@@ -8,7 +8,7 @@ export interface AudioWaveProps {
   color?: string;
 }
 
-export function AudioWave({ bars = 32, className, color = 'bg-emerald-400' }: AudioWaveProps) {
+export function AudioWave({ bars = 32, className, color = 'bg-accent' }: AudioWaveProps) {
   return (
     <div className={cn('flex h-12 items-end gap-[3px]', className)}>
       {Array.from({ length: bars }).map((_, i) => (

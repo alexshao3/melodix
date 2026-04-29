@@ -64,7 +64,7 @@ export function LibraryClient() {
     <div className="flex flex-col gap-5">
       <header className="rounded-2xl bg-white/[0.04] p-4">
         <div className="flex items-center gap-2">
-          <Heart className="h-5 w-5 fill-rose-400 text-rose-400" />
+          <Heart className="h-5 w-5 fill-current text-accent" />
           <h1 className="font-display text-xl font-bold text-white">Your library</h1>
         </div>
         <p className="mt-1 text-xs text-zinc-400">
@@ -99,7 +99,7 @@ export function LibraryClient() {
                 <button
                   type="button"
                   onClick={() => setCreateOpen(true)}
-                  className="text-cyan-300 underline-offset-2 hover:underline"
+                  className="text-accent underline-offset-2 hover:underline"
                 >
                   New playlist
                 </button>
@@ -113,7 +113,7 @@ export function LibraryClient() {
                       href={`/playlists/${p.id}`}
                       className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm text-white active:bg-white/10"
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-fuchsia-600 to-cyan-500">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[color:var(--surface-2)]">
                         {p.cover ? (
                           <Image src={p.cover} alt="" fill sizes="40px" className="object-cover" />
                         ) : (
@@ -136,7 +136,7 @@ export function LibraryClient() {
 
           <Section
             title="Liked songs"
-            icon={<Heart className="h-4 w-4 fill-rose-400 text-rose-400" />}
+            icon={<Heart className="h-4 w-4 fill-current text-accent" />}
           >
             {loading ? (
               <Empty>Loading…</Empty>
@@ -160,7 +160,7 @@ export function LibraryClient() {
                       href={`/artists/${a.id}`}
                       className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm text-white active:bg-white/10"
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-600 to-cyan-500">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--surface-2)]">
                         {a.image ? (
                           <Image src={a.image} alt="" fill sizes="40px" className="object-cover" />
                         ) : (

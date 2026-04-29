@@ -21,7 +21,13 @@ export function PlaylistCard({ playlist, onClick, index }: PlaylistCardProps) {
       transition={{ duration: 0.3, delay: (index ?? 0) * 0.03 }}
       className="group flex w-full flex-col gap-3 rounded-2xl bg-white/[0.03] p-3 text-left transition-[transform,background-color] duration-200 hover:-translate-y-1 hover:bg-white/[0.06]"
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700">
+      {/* Cover frame: solid surface-2 with a single coral edge stroke as
+       * the brand cue. The previous fuchsia → purple → indigo gradient
+       * was the design audit's #1 example of generic "AI gradient" slop. */}
+      <div
+        className="relative aspect-square w-full overflow-hidden rounded-xl"
+        style={{ background: 'var(--surface-2)' }}
+      >
         {playlist.cover ? (
           <Image
             src={playlist.cover}

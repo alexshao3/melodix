@@ -108,7 +108,7 @@ export function LyricsDrawer({ track, position, open, onClose }: LyricsDrawerPro
           >
             <header className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
               <div className="flex min-w-0 items-center gap-2">
-                <Mic2 className="h-4 w-4 shrink-0 text-fuchsia-400" />
+                <Mic2 className="h-4 w-4 shrink-0 text-accent" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold">{track.title}</div>
                   <div className="truncate text-xs text-zinc-400">{track.artistName}</div>
@@ -142,7 +142,7 @@ export function LyricsDrawer({ track, position, open, onClose }: LyricsDrawerPro
                     <p className="text-zinc-500">No lyrics available for this track yet.</p>
                   )}
                   {status === 'error' && (
-                    <p className="text-rose-400">
+                    <p className="text-accent">
                       Couldn&apos;t load lyrics. Please try again in a moment.
                     </p>
                   )}

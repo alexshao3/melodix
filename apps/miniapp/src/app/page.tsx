@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
 import { GENRES } from '@melodix/shared';
 import { api } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
@@ -13,21 +12,22 @@ export default async function MiniHome() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.04] px-5 py-6">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-50"
-          style={{
-            background:
-              'radial-gradient(400px 200px at 80% 0%, rgba(217,70,239,0.4), transparent 60%), radial-gradient(400px 200px at 0% 100%, rgba(34,211,238,0.4), transparent 60%)',
-          }}
-        />
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-widest text-zinc-300">
-          <Sparkles className="h-3 w-3 text-cyan-300" />
+      {/* Quiet near-black header — no double-radial gradient. The single
+       * coral accent on "taste" carries the brand; everything else is
+       * type-led to keep the Mini App feel native to Telegram chrome. */}
+      <header className="relative overflow-hidden rounded-2xl border border-[color:var(--hairline)] bg-[color:var(--surface-1)] px-5 py-6">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-widest text-zinc-300">
           Inside Telegram
         </div>
         <h1 className="mt-3 font-display text-2xl font-bold leading-tight text-white">
-          Where every beat <span className="text-gradient">finds you.</span>
+          Music with{' '}
+          <span
+            className="italic text-accent"
+            style={{ fontVariationSettings: '"SOFT" 60, "WONK" 1' }}
+          >
+            taste
+          </span>
+          <span className="text-white">.</span>
         </h1>
         <p className="mt-1 text-xs text-zinc-300">
           Tap a song to play. The mini-player stays with you everywhere.
@@ -45,7 +45,7 @@ export default async function MiniHome() {
               href={`/playlists/${p.id}`}
               className="group relative w-40 shrink-0 snap-start overflow-hidden rounded-xl bg-white/[0.04]"
             >
-              <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-fuchsia-600 to-cyan-500">
+              <div className="relative aspect-square w-full overflow-hidden bg-[color:var(--surface-2)]">
                 {p.cover ? (
                   <Image
                     src={p.cover}
@@ -72,7 +72,7 @@ export default async function MiniHome() {
             <Link
               key={g.id}
               href={`/discover?genre=${g.id}`}
-              className={`rounded-full bg-gradient-to-r px-3 py-1 text-xs font-medium text-white shadow ${g.color}`}
+              className="rounded-full border border-[color:var(--hairline)] bg-transparent px-3 py-1 text-xs font-medium text-zinc-300 transition-colors hover:border-[color:var(--hairline-strong)] hover:text-white"
             >
               {g.label}
             </Link>

@@ -74,7 +74,7 @@ export function EditPlaylistDialog({ open, onClose, playlist }: EditPlaylistDial
             onChange={(e) => setName(e.target.value)}
             required
             maxLength={120}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-cyan-400/40 focus:outline-none"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[color:var(--accent-line)] focus:outline-none"
           />
         </label>
         <label className="block">
@@ -86,7 +86,7 @@ export function EditPlaylistDialog({ open, onClose, playlist }: EditPlaylistDial
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             maxLength={2000}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-cyan-400/40 focus:outline-none"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[color:var(--accent-line)] focus:outline-none"
           />
         </label>
         <label className="block">
@@ -98,7 +98,7 @@ export function EditPlaylistDialog({ open, onClose, playlist }: EditPlaylistDial
             onChange={(e) => setCover(e.target.value)}
             placeholder="https://…"
             maxLength={2048}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-cyan-400/40 focus:outline-none"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[color:var(--accent-line)] focus:outline-none"
           />
         </label>
         <label className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
@@ -115,13 +115,13 @@ export function EditPlaylistDialog({ open, onClose, playlist }: EditPlaylistDial
             className="h-5 w-5 accent-cyan-400"
           />
         </label>
-        {error && <p className="text-xs text-rose-400">{error}</p>}
+        {error && <p className="text-xs text-accent">{error}</p>}
         <div className="flex items-center justify-between gap-2 pt-2">
           <button
             type="button"
             onClick={onDelete}
             disabled={submitting || deleting}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm text-rose-300 hover:bg-rose-500/10 hover:text-rose-200 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-sm text-accent hover:bg-accent-soft hover:text-accent disabled:opacity-50"
           >
             {deleting && <Spinner size={14} />}
             Delete

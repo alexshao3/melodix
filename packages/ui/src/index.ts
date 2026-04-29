@@ -18,3 +18,5 @@ export {
   HeaderSkeleton,
 } from './components/Skeleton';
 export { Modal } from './components/Modal';
+export { Wordmark, Monomark } from './brand/Wordmark';
+export type { WordmarkProps } from './brand/Wordmark';

@@ -26,11 +26,11 @@ export default async function PlaylistPage({ params }: PageProps) {
   return (
     <div>
       <header className="relative mt-2 flex flex-col items-start gap-6 overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] px-6 py-10 sm:flex-row sm:items-end sm:px-10">
+        <div aria-hidden className="aurora absolute inset-0 -z-10 opacity-40" />
         <div
-          aria-hidden
-          className="aurora animate-gradient-pan absolute inset-0 -z-10 opacity-40"
-        />
-        <div className="relative h-44 w-44 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700 shadow-2xl shadow-black/40">
+          className="relative h-44 w-44 shrink-0 overflow-hidden rounded-2xl shadow-2xl shadow-black/40"
+          style={{ background: 'var(--surface-2)' }}
+        >
           {playlist.cover ? (
             <Image
               src={playlist.cover}

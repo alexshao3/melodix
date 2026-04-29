@@ -67,9 +67,11 @@ export default async function MiniDiscover({ searchParams }: PageProps) {
           <Link
             key={g.id}
             href={hrefFor({ genre: g.id })}
-            className={`rounded-full bg-gradient-to-r px-3 py-1 text-xs font-medium text-white shadow ${
-              selected === g.id ? 'ring-2 ring-white/70' : ''
-            } ${g.color}`}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              selected === g.id
+                ? 'border-[color:var(--accent-line)] bg-accent-soft text-accent'
+                : 'border-[color:var(--hairline)] bg-transparent text-zinc-300 hover:border-[color:var(--hairline-strong)] hover:text-white'
+            }`}
           >
             {g.label}
           </Link>

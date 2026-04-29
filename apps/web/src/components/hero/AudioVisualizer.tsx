@@ -12,7 +12,7 @@ export function AudioVisualizer({ className }: { className?: string }) {
         return (
           <span
             key={i}
-            className="w-[3px] rounded-full bg-gradient-to-t from-fuchsia-500 via-rose-400 to-cyan-300 opacity-80"
+            className="w-[3px] rounded-full bg-accent opacity-80"
             style={{
               height: `${height}%`,
               animation: `audiowave ${1.2 + (i % 5) * 0.18}s ease-in-out ${(phase / 100) * 1.6}s infinite`,
