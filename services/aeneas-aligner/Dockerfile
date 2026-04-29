@@ -22,14 +22,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Aeneas + a lightweight FastAPI wrapper. Versions pinned to known-good
 # combinations (numpy <2 is required for aeneas's C extension).
 #
-# numpy MUST be installed in a separate `pip install` step before aeneas:
-# aeneas's setup.py does `import numpy` at metadata-generation time, and
-# pip's modern resolver does not make numpy importable to a sibling build
-# in the same install command. Splitting the steps fixes
-# `[ERRO] You must install numpy before installing aeneas`.
-RUN pip install --no-cache-dir "numpy<2"
+# Build-env constraints for aeneas==1.7.3.0 (last released 2017):
+#   - aeneas's setup.py does `import numpy` at metadata-generation time,
+#     so numpy must already be installed when its build runs. We install
+#     numpy in its own `pip install` first so it's importable.
+#   - aeneas pulls in `numpy.distutils`, which still imports
+#     `distutils.msvccompiler` — a module setuptools removed in 74.0.0
+#     (https://setuptools.pypa.io/en/latest/history.html#v74-0-0).
+#     We pin `setuptools<74` and use `--no-build-isolation` so aeneas's
+#     wheel build sees this older setuptools.
+#   - fastapi/uvicorn/httpx ship binary wheels for py311, so they can
+#     stay on the default isolated build path in their own step.
+RUN pip install --no-cache-dir "numpy<2" "setuptools<74" "wheel"
+RUN pip install --no-cache-dir --no-build-isolation aeneas==1.7.3.0
 RUN pip install --no-cache-dir \
-        aeneas==1.7.3.0 \
         fastapi==0.115.0 \
         "uvicorn[standard]==0.30.6" \
         httpx==0.27.2
