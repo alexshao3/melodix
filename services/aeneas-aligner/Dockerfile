@@ -21,8 +21,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Aeneas + a lightweight FastAPI wrapper. Versions pinned to known-good
 # combinations (numpy <2 is required for aeneas's C extension).
+#
+# numpy MUST be installed in a separate `pip install` step before aeneas:
+# aeneas's setup.py does `import numpy` at metadata-generation time, and
+# pip's modern resolver does not make numpy importable to a sibling build
+# in the same install command. Splitting the steps fixes
+# `[ERRO] You must install numpy before installing aeneas`.
+RUN pip install --no-cache-dir "numpy<2"
 RUN pip install --no-cache-dir \
-        "numpy<2" \
         aeneas==1.7.3.0 \
         fastapi==0.115.0 \
         "uvicorn[standard]==0.30.6" \
