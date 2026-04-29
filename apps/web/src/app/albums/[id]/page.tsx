@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Disc3 } from 'lucide-react';
@@ -5,7 +6,7 @@ import { TrackList } from '@/components/sections/TrackList';
 import { PlayTracksButton } from '@/components/sections/PlayTracksButton';
 import { api } from '@/lib/api';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -33,8 +34,7 @@ export default async function AlbumPage({ params }: PageProps) {
         />
         <div className="relative h-44 w-44 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-600 via-fuchsia-600 to-rose-600 shadow-2xl shadow-black/40">
           {album.cover ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={album.cover} alt={album.name} className="h-full w-full object-cover" />
+            <Image src={album.cover} alt="" fill sizes="176px" priority className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <Disc3 className="h-16 w-16 text-white/70" />

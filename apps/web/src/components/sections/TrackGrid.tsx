@@ -2,10 +2,11 @@
 
 import type { Track } from '@melodix/shared';
 import { TrackCard } from '@melodix/ui';
-import { usePlayer } from '@/components/player/PlayerProvider';
+import { usePlayerControls, usePlayerState } from '@/components/player/PlayerProvider';
 
 export function TrackGrid({ tracks }: { tracks: Track[] }) {
-  const { play, currentTrack, isPlaying } = usePlayer();
+  const { play } = usePlayerControls();
+  const { currentTrack, isPlaying } = usePlayerState();
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
       {tracks.map((track, i) => (

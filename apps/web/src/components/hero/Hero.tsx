@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { Headphones, Play, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { GradientButton } from '@melodix/ui';
@@ -12,8 +12,14 @@ export function Hero() {
     <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-black/30 px-6 py-12 sm:px-10 sm:py-16 lg:py-20">
       {/* Aurora background */}
       <div aria-hidden className="aurora animate-gradient-pan absolute inset-0 -z-10 opacity-70" />
-      <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_120%,rgba(0,0,0,0.6),transparent_60%)]" />
-      <div aria-hidden className="absolute -inset-1 -z-10 bg-[radial-gradient(circle_at_top,white_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.04]" />
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_120%,rgba(0,0,0,0.6),transparent_60%)]"
+      />
+      <div
+        aria-hidden
+        className="absolute -inset-1 -z-10 bg-[radial-gradient(circle_at_top,white_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.04]"
+      />
 
       <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
         <div>
@@ -43,8 +49,8 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mt-5 max-w-xl text-base text-zinc-300 sm:text-lg"
           >
-            Discover, play, and curate millions of Creative-Commons tracks. Beautifully fluid, deeply
-            personal, and ready inside Telegram.
+            Discover, play, and curate millions of Creative-Commons tracks. Beautifully fluid,
+            deeply personal, and ready inside Telegram.
           </motion.p>
 
           <motion.div
@@ -59,7 +65,11 @@ export function Hero() {
               </GradientButton>
             </Link>
             <Link href="/discover">
-              <GradientButton variant="secondary" size="lg" icon={<Headphones className="h-4 w-4" />}>
+              <GradientButton
+                variant="secondary"
+                size="lg"
+                icon={<Headphones className="h-4 w-4" />}
+              >
                 Explore moods
               </GradientButton>
             </Link>

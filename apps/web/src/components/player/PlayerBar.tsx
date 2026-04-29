@@ -1,6 +1,7 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import {
   Mic2,
   Pause,
@@ -72,11 +73,12 @@ export function PlayerBar() {
             <div className="flex min-w-0 flex-1 items-center gap-3 sm:max-w-xs">
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
                 {currentTrack.cover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={currentTrack.cover}
-                    alt={currentTrack.title}
-                    className="h-full w-full object-cover"
+                    alt=""
+                    fill
+                    sizes="48px"
+                    className="object-cover"
                   />
                 ) : null}
                 <motion.div

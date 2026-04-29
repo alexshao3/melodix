@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { m as motion } from 'framer-motion';
 import { Play, Pause } from 'lucide-react';
 import type { Track } from '@melodix/shared';
 import { formatDuration } from '@melodix/shared';
@@ -58,12 +59,16 @@ export function TrackCard({
         </div>
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-zinc-800">
           {track.cover ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={track.cover} alt={track.title} className="h-full w-full object-cover" />
+            <Image src={track.cover} alt="" fill sizes="40px" className="object-cover" />
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
-          <div className={cn('truncate text-sm font-medium', isActive ? 'text-emerald-400' : 'text-white')}>
+          <div
+            className={cn(
+              'truncate text-sm font-medium',
+              isActive ? 'text-emerald-400' : 'text-white',
+            )}
+          >
             {track.title}
           </div>
           <div className="truncate text-xs text-zinc-400">{track.artistName}</div>
@@ -81,16 +86,16 @@ export function TrackCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: (index ?? 0) * 0.03 }}
-      whileHover={{ y: -4 }}
-      className="group relative flex w-full flex-col gap-3 rounded-2xl bg-white/[0.03] p-3 text-left transition-colors hover:bg-white/[0.06]"
+      className="group relative flex w-full flex-col gap-3 rounded-2xl bg-white/[0.03] p-3 text-left transition-[transform,background-color] duration-200 hover:-translate-y-1 hover:bg-white/[0.06]"
     >
       <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-zinc-800">
         {track.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={track.cover}
-            alt={track.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            alt=""
+            fill
+            sizes="(min-width: 1280px) 192px, (min-width: 768px) 25vw, 50vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : null}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -102,7 +107,11 @@ export function TrackCard({
           }}
           className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-black shadow-lg shadow-emerald-500/30"
         >
-          {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
+          {isPlaying ? (
+            <Pause className="h-5 w-5 fill-current" />
+          ) : (
+            <Play className="h-5 w-5 fill-current" />
+          )}
         </motion.span>
         <span className="absolute right-3 top-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-emerald-500 text-black opacity-0 shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <Play className="h-5 w-5 fill-current" />

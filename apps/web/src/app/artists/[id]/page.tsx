@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { User } from 'lucide-react';
 import { formatNumber } from '@melodix/shared';
@@ -9,7 +10,7 @@ import { AlbumGrid } from '@/components/artists/AlbumGrid';
 import { ArtistBio } from '@/components/artists/ArtistBio';
 import { api } from '@/lib/api';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -35,8 +36,7 @@ export default async function ArtistPage({ params }: PageProps) {
         />
         <div className="relative h-44 w-44 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-600 to-cyan-500 shadow-2xl shadow-black/40">
           {artist.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={artist.image} alt={artist.name} className="h-full w-full object-cover" />
+            <Image src={artist.image} alt="" fill sizes="176px" priority className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <User className="h-16 w-16 text-white/70" />

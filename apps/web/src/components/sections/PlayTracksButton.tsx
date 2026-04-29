@@ -3,7 +3,7 @@
 import { Play } from 'lucide-react';
 import { GradientButton } from '@melodix/ui';
 import type { Track } from '@melodix/shared';
-import { usePlayer } from '@/components/player/PlayerProvider';
+import { usePlayerControls } from '@/components/player/PlayerProvider';
 
 export interface PlayTracksButtonProps {
   tracks: Track[];
@@ -15,7 +15,7 @@ export interface PlayTracksButtonProps {
  * Used by playlist / album / artist detail pages.
  */
 export function PlayTracksButton({ tracks, label = 'Play' }: PlayTracksButtonProps) {
-  const { play } = usePlayer();
+  const { play } = usePlayerControls();
   return (
     <GradientButton
       size="lg"

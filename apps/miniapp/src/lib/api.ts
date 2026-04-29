@@ -7,12 +7,20 @@ function token(): string | null {
   return localStorage.getItem('melodix.token');
 }
 
-async function safe<T>(path: string, fallback: T): Promise<T> {
+/**
+ * Anonymous-only public read. Authed callers should use `authed`. We pass
+ * through optional `next: { revalidate, tags }` so server-side renders
+ * can opt into ISR; client-side calls fall back to default fetch caching.
+ */
+async function safe<T>(path: string, fallback: T, init?: RequestInit): Promise<T> {
   try {
-    const headers = new Headers({ Accept: 'application/json' });
+    const headers = new Headers(init?.headers);
+    headers.set('Accept', 'application/json');
     const t = token();
     if (t) headers.set('Authorization', `Bearer ${t}`);
-    const res = await fetch(`${BASE_URL}${path}`, { headers, cache: 'no-store' });
+    const cacheOverride: Pick<RequestInit, 'cache'> = {};
+    if (init?.cache === undefined && t) cacheOverride.cache = 'no-store';
+    const res = await fetch(`${BASE_URL}${path}`, { ...init, headers, ...cacheOverride });
     if (!res.ok) return fallback;
     return (await res.json()) as T;
   } catch {
@@ -61,15 +69,19 @@ function sourceQuery(source: SourceFilter): string {
   return source === 'all' ? '' : `&source=${source}`;
 }
 
+const PUBLIC_FEED: RequestInit = { next: { revalidate: 60, tags: ['feed'] } };
+const PUBLIC_ENTITY: RequestInit = { next: { revalidate: 60, tags: ['entity'] } };
+
 export const api = {
   trending: (source: SourceFilter = 'all') =>
-    safe<Track[]>(`/api/tracks/trending?limit=20${sourceQuery(source)}`, []),
+    safe<Track[]>(`/api/tracks/trending?limit=20${sourceQuery(source)}`, [], PUBLIC_FEED),
   newReleases: (source: SourceFilter = 'all') =>
-    safe<Track[]>(`/api/tracks/new-releases?limit=20${sourceQuery(source)}`, []),
+    safe<Track[]>(`/api/tracks/new-releases?limit=20${sourceQuery(source)}`, [], PUBLIC_FEED),
   byGenre: (genre: string, source: SourceFilter = 'all') =>
     safe<Track[]>(
       `/api/tracks/genre/${encodeURIComponent(genre)}?limit=20${sourceQuery(source)}`,
       [],
+      PUBLIC_FEED,
     ),
   search: (q: string) =>
     safe<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`, {
@@ -78,18 +90,24 @@ export const api = {
       artists: [],
       playlists: [],
     }),
-  featured: () => safe<Playlist[]>(`/api/playlists/featured`, []),
+  featured: () => safe<Playlist[]>(`/api/playlists/featured`, [], PUBLIC_FEED),
   playlist: (id: string) =>
     safe<{ playlist: Playlist; tracks: Track[] } | null>(
       `/api/playlists/${encodeURIComponent(id)}`,
       null,
+      PUBLIC_ENTITY,
     ),
   album: (id: string) =>
-    safe<{ album: Album; tracks: Track[] } | null>(`/api/albums/${encodeURIComponent(id)}`, null),
+    safe<{ album: Album; tracks: Track[] } | null>(
+      `/api/albums/${encodeURIComponent(id)}`,
+      null,
+      PUBLIC_ENTITY,
+    ),
   artist: (id: string) =>
     safe<{ artist: Artist; tracks: Track[]; albums: Album[] } | null>(
       `/api/artists/${encodeURIComponent(id)}`,
       null,
+      PUBLIC_ENTITY,
     ),
   telegramLogin: (initData: string) => post<{ token: string }>(`/api/auth/telegram`, { initData }),
 

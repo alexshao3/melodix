@@ -1,10 +1,11 @@
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ListMusic } from 'lucide-react';
 import { PlaylistAuthBoundary } from '@/components/playlist/PlaylistAuthBoundary';
 import { PlayPlaylistButton } from './PlayPlaylistButton';
 import { api } from '@/lib/api';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -31,8 +32,14 @@ export default async function PlaylistPage({ params }: PageProps) {
         />
         <div className="relative h-44 w-44 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700 shadow-2xl shadow-black/40">
           {playlist.cover ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={playlist.cover} alt={playlist.name} className="h-full w-full object-cover" />
+            <Image
+              src={playlist.cover}
+              alt=""
+              fill
+              sizes="176px"
+              priority
+              className="object-cover"
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <ListMusic className="h-16 w-16 text-white/70" />

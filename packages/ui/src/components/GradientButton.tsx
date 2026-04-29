@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { cn } from '../lib/cn';
 
 interface GradientButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {

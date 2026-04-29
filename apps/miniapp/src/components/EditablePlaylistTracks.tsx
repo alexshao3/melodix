@@ -8,7 +8,7 @@ import type { Track } from '@melodix/shared';
 import { formatDuration } from '@melodix/shared';
 import { cn } from '@/lib/cn';
 import { api } from '@/lib/api';
-import { usePlayer } from './PlayerProvider';
+import { usePlayerControls, usePlayerState } from './PlayerProvider';
 
 interface EditablePlaylistTracksProps {
   playlistId: string;
@@ -100,7 +100,8 @@ interface EditableMiniRowProps {
 }
 
 function EditableMiniRow({ track, tracks, busy, onDragSettle, onRemove }: EditableMiniRowProps) {
-  const { play, currentTrack, isPlaying, toggle } = usePlayer();
+  const { play, toggle } = usePlayerControls();
+  const { currentTrack, isPlaying } = usePlayerState();
   const dragControls = useDragControls();
   const active = currentTrack?.id === track.id;
   const playing = active && isPlaying;

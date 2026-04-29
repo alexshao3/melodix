@@ -71,13 +71,20 @@ body {
   color: var(--selection-fg);
 }
 
-/* Aurora background mesh */
+/* Aurora background mesh — promoted to its own composited layer so the
+ * 40 px blur is paid once on first paint instead of on every scroll /
+ * resize. `saturate()` was dropped: the radial-gradients already define
+ * the colour, the saturation pass was paint-bound waste. `pointer-events`
+ * is none-d here too in case it sits over interactive content. */
 .aurora {
   background: radial-gradient(1200px 700px at 0% 0%, rgba(217, 70, 239, 0.35), transparent 60%),
     radial-gradient(900px 600px at 100% 0%, rgba(34, 211, 238, 0.35), transparent 60%),
     radial-gradient(900px 700px at 50% 120%, rgba(16, 185, 129, 0.35), transparent 60%);
   background-size: 200% 200%;
-  filter: blur(40px) saturate(1.1);
+  filter: blur(40px);
+  pointer-events: none;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* Frosted glass card */
