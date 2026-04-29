@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { findActiveLine, parseLrc, type Track } from '@melodix/shared';
 import { api } from '../lib/api';

@@ -143,7 +143,21 @@ src/lib/
 **Audio engine.** `PlayerProvider` ([`player/PlayerProvider.tsx`](../../apps/web/src/components/player/PlayerProvider.tsx))
 holds `currentTrack`, `queue`, `history`, `isPlaying`, `position`, `duration`,
 `volume`, `shuffle`, `repeat`. Wires `<audio>` ref + MediaSession + keyboard
-shortcuts. **All web playback flows go through it.**
+shortcuts. **All web playback flows go through it.** State is exposed via
+**three split contexts** so a `timeupdate` tick (~4 Hz) only re-renders
+components that actually display position:
+
+- `usePlayerState()` — `currentTrack`, `queue`, `history`, `isPlaying`,
+  `volume`, `shuffle`, `repeat` (changes only on user actions). Subscribed by
+  sidebars, track lists, "now-playing" indicators.
+- `usePlayerProgress()` — `position`, `duration` (fires every audio tick).
+  Subscribed only by `PlayerBar` and `LyricsDrawer`.
+- `usePlayerControls()` — `play`, `toggle`, `next`, `prev`, `seek`, `setVolume`,
+  `enqueue`, `playNext`, `clearQueue`, `setShuffle`, `setRepeat`. Identity-
+  stable callbacks so pure dispatchers never re-render.
+
+`usePlayer()` is preserved for back-compat (returns the union of all three).
+The miniapp `PlayerProvider` mirrors the same split (sans volume/shuffle/repeat).
 
 **State.** Zustand is available but currently only the Player context is in
 use. Add stores under `src/lib/store/` if you need more.

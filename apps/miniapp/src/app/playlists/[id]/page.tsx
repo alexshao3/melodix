@@ -1,9 +1,10 @@
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { api } from '@/lib/api';
 import { MiniTracksAuthBoundary } from '@/components/MiniTracksAuthBoundary';
 import { PlaylistOwnerGate } from '@/components/PlaylistOwnerGate';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -20,8 +21,14 @@ export default async function MiniPlaylist({ params }: PageProps) {
         <div className="flex items-center gap-3">
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-fuchsia-600 to-cyan-500">
             {playlist.cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={playlist.cover} alt="" className="h-full w-full object-cover" />
+              <Image
+                src={playlist.cover}
+                alt=""
+                fill
+                sizes="80px"
+                priority
+                className="object-cover"
+              />
             ) : null}
           </div>
           <div className="min-w-0">

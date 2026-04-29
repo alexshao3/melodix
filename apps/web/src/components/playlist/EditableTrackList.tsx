@@ -7,7 +7,7 @@ import { Reorder, useDragControls } from 'framer-motion';
 import { ArrowDown, ArrowUp, GripVertical, Pause, Play, Trash2 } from 'lucide-react';
 import { AudioWave } from '@melodix/ui';
 import type { Track } from '@melodix/shared';
-import { usePlayer } from '@/components/player/PlayerProvider';
+import { usePlayerControls, usePlayerState } from '@/components/player/PlayerProvider';
 import { formatDuration } from '@melodix/shared';
 import { api } from '@/lib/api';
 
@@ -32,7 +32,8 @@ export function EditableTrackList({ playlistId, tracks: initial }: EditableTrack
   const [persisted, setPersisted] = useState<Track[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-  const { currentTrack, isPlaying, play, toggle } = usePlayer();
+  const { currentTrack, isPlaying } = usePlayerState();
+  const { play, toggle } = usePlayerControls();
 
   // Commit the current local order to the server. Snapshots the previous
   // persisted order so a failed request rolls UI state back deterministically.

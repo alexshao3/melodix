@@ -3,7 +3,7 @@ import { GENRES } from '@melodix/shared';
 import { api, type SourceFilter } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PageProps {
   searchParams: Promise<{ genre?: string; source?: string }>;

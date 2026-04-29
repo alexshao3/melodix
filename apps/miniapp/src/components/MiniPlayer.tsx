@@ -1,6 +1,7 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { AnimatePresence, m as motion } from 'framer-motion';
 import { Mic2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { useState } from 'react';
 import { formatDuration } from '@melodix/shared';
@@ -31,8 +32,7 @@ export function MiniPlayer() {
           <div className="flex items-center gap-3 p-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
               {currentTrack.cover ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={currentTrack.cover} alt="" className="h-full w-full object-cover" />
+                <Image src={currentTrack.cover} alt="" fill sizes="48px" className="object-cover" />
               ) : null}
             </div>
             <div className="min-w-0 flex-1">

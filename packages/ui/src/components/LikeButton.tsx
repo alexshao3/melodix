@@ -1,7 +1,7 @@
 'use client';
 
 import { Heart } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { cn } from '../lib/cn';
 
 export interface LikeButtonProps {

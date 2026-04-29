@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, History, ListMusic, Plus, User, UserPlus } from 'lucide-react';
 import type { Artist, Playlist, Track } from '@melodix/shared';
@@ -114,8 +115,7 @@ export function LibraryClient() {
                     >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-fuchsia-600 to-cyan-500">
                         {p.cover ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.cover} alt="" className="h-full w-full object-cover" />
+                          <Image src={p.cover} alt="" fill sizes="40px" className="object-cover" />
                         ) : (
                           <ListMusic className="h-4 w-4 text-white" />
                         )}
@@ -162,8 +162,7 @@ export function LibraryClient() {
                     >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-600 to-cyan-500">
                         {a.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={a.image} alt="" className="h-full w-full object-cover" />
+                          <Image src={a.image} alt="" fill sizes="40px" className="object-cover" />
                         ) : (
                           <User className="h-4 w-4 text-white" />
                         )}

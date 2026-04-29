@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Disc3, User } from 'lucide-react';
@@ -6,7 +7,7 @@ import { api } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
 import { FollowButton } from '@/components/FollowButton';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -25,8 +26,14 @@ export default async function MiniArtist({ params }: PageProps) {
         <div className="flex items-center gap-3">
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-violet-600 to-cyan-500">
             {artist.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={artist.image} alt="" className="h-full w-full object-cover" />
+              <Image
+                src={artist.image}
+                alt=""
+                fill
+                sizes="80px"
+                priority
+                className="object-cover"
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <User className="h-8 w-8 text-white/70" />
@@ -76,8 +83,13 @@ export default async function MiniArtist({ params }: PageProps) {
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gradient-to-br from-cyan-500/30 to-fuchsia-600/30">
                   {album.cover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={album.cover} alt="" className="h-full w-full object-cover" />
+                    <Image
+                      src={album.cover}
+                      alt=""
+                      fill
+                      sizes="(min-width: 480px) 25vw, 33vw"
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <Disc3 className="h-6 w-6 text-white/70" />

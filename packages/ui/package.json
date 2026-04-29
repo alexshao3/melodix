@@ -10,6 +10,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "peerDependencies": {
+    "next": "^14.0.0 || ^15.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
+    "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "typescript": "^5.7.2"

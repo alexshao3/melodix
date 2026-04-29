@@ -7,6 +7,15 @@ function token(): string | null {
   return localStorage.getItem('melodix.token');
 }
 
+/**
+ * Cache strategy:
+ *  - mutations and any authed read default to `cache: 'no-store'` so user-
+ *    scoped data never bleeds into the static cache.
+ *  - public anonymous reads opt into ISR by passing `next: { revalidate, tags }`.
+ *    Server fetches dedupe across the request and persist to the data cache;
+ *    revalidation is driven by `revalidateTag` in the relevant mutation paths.
+ *  - explicit `init.cache` always wins.
+ */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set('Accept', 'application/json');
@@ -14,10 +23,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const t = token();
   if (t) headers.set('Authorization', `Bearer ${t}`);
 
+  const isMutation = !!init?.method && init.method.toUpperCase() !== 'GET';
+  const cacheOverride: Pick<RequestInit, 'cache'> = {};
+  if (init?.cache === undefined && (isMutation || t)) {
+    cacheOverride.cache = 'no-store';
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers,
-    cache: init?.cache ?? 'no-store',
+    ...cacheOverride,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -51,22 +66,35 @@ function sourceQuery(source: SourceFilter): string {
   return source === 'all' ? '' : `&source=${source}`;
 }
 
+/**
+ * 60-second ISR window for public catalogue feeds. Each call also tags the
+ * response so a future mutation (e.g. an admin re-curating Featured) can
+ * target it via `revalidateTag` without flushing the whole cache.
+ */
+const PUBLIC_FEED: RequestInit = { next: { revalidate: 60, tags: ['feed'] } };
+const PUBLIC_ENTITY: RequestInit = { next: { revalidate: 60, tags: ['entity'] } };
+
 export const api = {
   trending: (limit = 24, source: SourceFilter = 'all') =>
-    safe<Track[]>(`/api/tracks/trending?limit=${limit}${sourceQuery(source)}`, []),
+    safe<Track[]>(`/api/tracks/trending?limit=${limit}${sourceQuery(source)}`, [], PUBLIC_FEED),
   newReleases: (limit = 24, source: SourceFilter = 'all') =>
-    safe<Track[]>(`/api/tracks/new-releases?limit=${limit}${sourceQuery(source)}`, []),
+    safe<Track[]>(`/api/tracks/new-releases?limit=${limit}${sourceQuery(source)}`, [], PUBLIC_FEED),
   byGenre: (genre: string, limit = 24, source: SourceFilter = 'all') =>
     safe<Track[]>(
       `/api/tracks/genre/${encodeURIComponent(genre)}?limit=${limit}${sourceQuery(source)}`,
       [],
+      PUBLIC_FEED,
     ),
-  track: (id: string) => request<Track>(`/api/tracks/${encodeURIComponent(id)}`),
+  track: (id: string) => request<Track>(`/api/tracks/${encodeURIComponent(id)}`, PUBLIC_ENTITY),
   album: (id: string) =>
-    request<{ album: Album; tracks: Track[] }>(`/api/albums/${encodeURIComponent(id)}`),
+    request<{ album: Album; tracks: Track[] }>(
+      `/api/albums/${encodeURIComponent(id)}`,
+      PUBLIC_ENTITY,
+    ),
   artist: (id: string) =>
     request<{ artist: Artist; tracks: Track[]; albums: Album[] }>(
       `/api/artists/${encodeURIComponent(id)}`,
+      PUBLIC_ENTITY,
     ),
   search: (q: string) =>
     safe<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`, {
@@ -75,9 +103,12 @@ export const api = {
       artists: [],
       playlists: [],
     }),
-  featuredPlaylists: () => safe<Playlist[]>(`/api/playlists/featured`, []),
+  featuredPlaylists: () => safe<Playlist[]>(`/api/playlists/featured`, [], PUBLIC_FEED),
   playlist: (id: string) =>
-    request<{ playlist: Playlist; tracks: Track[] }>(`/api/playlists/${encodeURIComponent(id)}`),
+    request<{ playlist: Playlist; tracks: Track[] }>(
+      `/api/playlists/${encodeURIComponent(id)}`,
+      PUBLIC_ENTITY,
+    ),
   myPlaylists: () => request<Playlist[]>(`/api/playlists`),
   createPlaylist: (name: string, description?: string) =>
     request<Playlist>(`/api/playlists`, {

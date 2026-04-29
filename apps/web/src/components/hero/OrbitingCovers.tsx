@@ -1,15 +1,19 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { m as motion } from 'framer-motion';
+import { DEMO_HERO_COVERS, DEMO_HERO_CENTER } from '@/lib/demoCovers';
 
-const COVERS = [
-  { seed: 'neon', size: 120, top: '0%', left: '50%', delay: 0, dist: 160 },
-  { seed: 'velvet', size: 96, top: '20%', left: '85%', delay: 0.2, dist: 140 },
-  { seed: 'cobalt', size: 110, top: '60%', left: '85%', delay: 0.4, dist: 150 },
-  { seed: 'bloom', size: 130, top: '80%', left: '50%', delay: 0.6, dist: 170 },
-  { seed: 'static', size: 96, top: '60%', left: '15%', delay: 0.8, dist: 140 },
-  { seed: 'glassway', size: 110, top: '20%', left: '15%', delay: 1.0, dist: 150 },
-];
+const LAYOUT = [
+  { size: 120, top: '0%', left: '50%', delay: 0 },
+  { size: 96, top: '20%', left: '85%', delay: 0.2 },
+  { size: 110, top: '60%', left: '85%', delay: 0.4 },
+  { size: 130, top: '80%', left: '50%', delay: 0.6 },
+  { size: 96, top: '60%', left: '15%', delay: 0.8 },
+  { size: 110, top: '20%', left: '15%', delay: 1.0 },
+] as const;
+
+const COVERS = LAYOUT.map((l, i) => ({ ...l, src: DEMO_HERO_COVERS[i % DEMO_HERO_COVERS.length] }));
 
 export function OrbitingCovers() {
   return (
@@ -24,11 +28,14 @@ export function OrbitingCovers() {
         <div className="relative h-56 w-56 sm:h-64 sm:w-64">
           <div className="absolute inset-0 animate-spin-slow rounded-full bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-rose-500 opacity-70 blur-2xl" />
           <div className="absolute inset-3 overflow-hidden rounded-full ring-1 ring-white/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://picsum.photos/seed/melodix-hero/600/600"
+            <Image
+              src={DEMO_HERO_CENTER}
               alt=""
-              className="h-full w-full animate-spin-slow object-cover"
+              fill
+              sizes="(min-width: 640px) 256px, 224px"
+              priority
+              fetchPriority="high"
+              className="animate-spin-slow object-cover"
             />
             <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-black/30 to-transparent" />
           </div>
@@ -67,12 +74,7 @@ export function OrbitingCovers() {
           }}
           className="absolute overflow-hidden rounded-2xl shadow-2xl shadow-black/40 ring-1 ring-white/15 backdrop-blur"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`https://picsum.photos/seed/melodix-${c.seed}/240/240`}
-            alt=""
-            className="h-full w-full object-cover"
-          />
+          <Image src={c.src} alt="" fill sizes={`${c.size}px`} className="object-cover" />
         </motion.div>
       ))}
     </div>

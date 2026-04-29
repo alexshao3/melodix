@@ -2,10 +2,11 @@
 
 import type { Track } from '@melodix/shared';
 import { TrackCard } from '@melodix/ui';
-import { usePlayer } from '@/components/player/PlayerProvider';
+import { usePlayerControls, usePlayerState } from '@/components/player/PlayerProvider';
 
 export function TrackList({ tracks }: { tracks: Track[] }) {
-  const { play, currentTrack, isPlaying } = usePlayer();
+  const { play } = usePlayerControls();
+  const { currentTrack, isPlaying } = usePlayerState();
   return (
     <div className="flex flex-col gap-1">
       {tracks.map((track, i) => (

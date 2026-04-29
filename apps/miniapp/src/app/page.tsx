@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { GENRES } from '@melodix/shared';
@@ -5,7 +6,7 @@ import { api } from '@/lib/api';
 import { MiniTrackRow } from '@/components/MiniTrackRow';
 import { MiniRecommendedSection } from '@/components/MiniRecommendedSection';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function MiniHome() {
   const [trending, featured] = await Promise.all([api.trending(), api.featured()]);
@@ -46,8 +47,13 @@ export default async function MiniHome() {
             >
               <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-fuchsia-600 to-cyan-500">
                 {p.cover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.cover} alt="" className="h-full w-full object-cover" />
+                  <Image
+                    src={p.cover}
+                    alt=""
+                    fill
+                    sizes="(min-width: 480px) 33vw, 50vw"
+                    className="object-cover"
+                  />
                 ) : null}
               </div>
               <div className="px-2 py-2">

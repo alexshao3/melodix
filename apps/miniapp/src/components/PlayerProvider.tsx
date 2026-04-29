@@ -14,12 +14,24 @@ import { tgHaptic } from '@/lib/telegram';
 import { pushRecentlyPlayed } from '@/lib/recently-played';
 import { api } from '@/lib/api';
 
-interface PlayerContextValue {
+/**
+ * Player state is split across three contexts so subscribers only re-render
+ * for the slice they consume. See the web app's PlayerProvider for the
+ * rationale; this is the same pattern, scaled down to the Mini App's
+ * smaller control surface.
+ */
+interface PlayerStateValue {
   currentTrack: Track | null;
   queue: Track[];
   isPlaying: boolean;
+}
+
+interface PlayerProgressValue {
   position: number;
   duration: number;
+}
+
+interface PlayerControlsValue {
   play: (track: Track, queue?: Track[]) => void;
   toggle: () => void;
   next: () => void;
@@ -27,12 +39,30 @@ interface PlayerContextValue {
   seek: (s: number) => void;
 }
 
-const PlayerContext = createContext<PlayerContextValue | null>(null);
+const PlayerStateContext = createContext<PlayerStateValue | null>(null);
+const PlayerProgressContext = createContext<PlayerProgressValue | null>(null);
+const PlayerControlsContext = createContext<PlayerControlsValue | null>(null);
 
-export function usePlayer() {
-  const ctx = useContext(PlayerContext);
-  if (!ctx) throw new Error('usePlayer must be used inside PlayerProvider');
+export function usePlayerState(): PlayerStateValue {
+  const ctx = useContext(PlayerStateContext);
+  if (!ctx) throw new Error('usePlayerState must be used inside PlayerProvider');
   return ctx;
+}
+
+export function usePlayerProgress(): PlayerProgressValue {
+  const ctx = useContext(PlayerProgressContext);
+  if (!ctx) throw new Error('usePlayerProgress must be used inside PlayerProvider');
+  return ctx;
+}
+
+export function usePlayerControls(): PlayerControlsValue {
+  const ctx = useContext(PlayerControlsContext);
+  if (!ctx) throw new Error('usePlayerControls must be used inside PlayerProvider');
+  return ctx;
+}
+
+export function usePlayer(): PlayerStateValue & PlayerProgressValue & PlayerControlsValue {
+  return { ...usePlayerState(), ...usePlayerProgress(), ...usePlayerControls() };
 }
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
@@ -142,10 +172,26 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setPosition(s);
   }, []);
 
-  const value = useMemo(
-    () => ({ currentTrack, queue, isPlaying, position, duration, play, toggle, next, prev, seek }),
-    [currentTrack, queue, isPlaying, position, duration, play, toggle, next, prev, seek],
+  const stateValue = useMemo<PlayerStateValue>(
+    () => ({ currentTrack, queue, isPlaying }),
+    [currentTrack, queue, isPlaying],
+  );
+  const progressValue = useMemo<PlayerProgressValue>(
+    () => ({ position, duration }),
+    [position, duration],
+  );
+  const controlsValue = useMemo<PlayerControlsValue>(
+    () => ({ play, toggle, next, prev, seek }),
+    [play, toggle, next, prev, seek],
   );
 
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+  return (
+    <PlayerStateContext.Provider value={stateValue}>
+      <PlayerProgressContext.Provider value={progressValue}>
+        <PlayerControlsContext.Provider value={controlsValue}>
+          {children}
+        </PlayerControlsContext.Provider>
+      </PlayerProgressContext.Provider>
+    </PlayerStateContext.Provider>
+  );
 }
