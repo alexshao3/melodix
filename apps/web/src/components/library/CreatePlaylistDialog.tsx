@@ -59,7 +59,7 @@ export function CreatePlaylistDialog({ open, onClose, onCreated }: CreatePlaylis
             autoFocus
             required
             maxLength={120}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-cyan-400/40 focus:outline-none"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[color:var(--accent-line)] focus:outline-none"
           />
         </label>
         <label className="block">
@@ -71,10 +71,10 @@ export function CreatePlaylistDialog({ open, onClose, onCreated }: CreatePlaylis
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             maxLength={2000}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-cyan-400/40 focus:outline-none"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[color:var(--accent-line)] focus:outline-none"
           />
         </label>
-        {error && <p className="text-xs text-rose-400">{error}</p>}
+        {error && <p className="text-xs text-accent">{error}</p>}
         <div className="flex items-center justify-end gap-2 pt-2">
           <button
             type="button"

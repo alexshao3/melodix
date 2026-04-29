@@ -254,8 +254,30 @@ prevent the TOCTOU race fixed in #20).
 `AlbumCard`, `ArtistCard`, `TrackCard`, `PlaylistCard`, `GenrePill`,
 `GradientButton`, `AudioWave`, `Waveform` (peaks-driven SVG scrubber, see
 ADR-0023), `LikeButton`, `Marquee`, `Spinner`, `Skeleton`,
-`TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton`. Use these before
-building yours from scratch.
+`TrackSkeletonRow`, `CardSkeletonGrid`, `HeaderSkeleton`, plus the brand
+marks `Wordmark` / `Monomark` (under `packages/ui/src/brand/`, see
+ADR-0031). Use these before building yours from scratch.
+
+## Design system
+
+Single source of truth: `apps/web/src/app/globals.css` (mirrored verbatim
+into `apps/miniapp/src/app/globals.css` so `packages/ui` components render
+identically across both apps). All colours are oklch tuples bound to CSS
+variables on `:root` (dark) and `:root.light` (light):
+
+- **Surfaces:** `--surface-{0,1,2,3}` (page, card, hover, popover) +
+  `--hairline{,-strong}` for borders.
+- **Ink:** `--ink-{1,2,3}` (primary / secondary / tertiary text).
+- **Accent:** `--accent-{bg,bg-hover,fg,soft,line}` — a single coral
+  (`oklch(0.66 0.26 27)` ≈ `#ff3d4f`) used as the brand "Boom" colour. No
+  multi-stop gradients.
+- **Display face:** Fraunces Variable (with the SOFT and WONK axes used on
+  the hero accent word). Body face: Inter Variable. Both are bundled via
+  `@fontsource-variable` per ADR-0027.
+
+Tailwind picks these up via `tailwind.config.ts` in each app: `bg-surface-1`,
+`text-ink-2`, `bg-accent`, `border-hairline`, `text-accent`, etc. Prefer
+those tokens over raw `bg-zinc-*` / `text-white` when adding new code.
 
 ## Tests
 

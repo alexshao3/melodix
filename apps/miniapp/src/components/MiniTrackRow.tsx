@@ -46,7 +46,7 @@ export function MiniTrackRow({
       </div>
       <div className="min-w-0 flex-1">
         <div
-          className={cn('truncate text-sm font-semibold', active ? 'text-cyan-300' : 'text-white')}
+          className={cn('truncate text-sm font-semibold', active ? 'text-accent' : 'text-white')}
         >
           {track.title}
         </div>

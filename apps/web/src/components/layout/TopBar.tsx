@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Search, Sparkles, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, User } from 'lucide-react';
+import { Monomark, Wordmark } from '@melodix/ui';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 export function TopBar() {
@@ -27,10 +28,8 @@ export function TopBar() {
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-10">
         {/* Mobile brand */}
         <Link href="/" className="flex items-center gap-2 lg:hidden">
-          <span className="relative flex h-8 w-8 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-rose-500">
-            <Sparkles className="h-4 w-4 text-white" />
-          </span>
-          <span className="font-display text-lg font-bold text-white">Melodix</span>
+          <Monomark className="h-8 w-8" />
+          <Wordmark className="text-xl text-white" />
         </Link>
 
         <div className="hidden items-center gap-1 lg:flex">
@@ -65,7 +64,7 @@ export function TopBar() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Songs, artists, albums…"
-              className="w-full rounded-full border border-white/10 bg-white/5 py-2 pl-11 pr-4 text-sm text-white placeholder:text-zinc-500 focus:border-cyan-400/40 focus:bg-white/10 focus:outline-none"
+              className="w-full rounded-full border border-white/10 bg-white/5 py-2 pl-11 pr-4 text-sm text-white placeholder:text-zinc-500 focus:border-[color:var(--accent-line)] focus:bg-white/10 focus:outline-none"
             />
           </label>
         </form>

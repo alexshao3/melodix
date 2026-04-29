@@ -28,7 +28,7 @@ export function MiniNav() {
                 active ? 'text-white' : 'text-zinc-500',
               )}
             >
-              <Icon className={cn('h-5 w-5', active && 'text-cyan-300')} />
+              <Icon className={cn('h-5 w-5', active && 'text-accent')} />
               {label}
             </Link>
           );

@@ -138,7 +138,7 @@ export function LyricsSheet({ track, position, open, onClose }: LyricsSheetProps
                     <p className="text-zinc-500">No lyrics available for this track yet.</p>
                   )}
                   {status === 'error' && (
-                    <p className="text-rose-400">Couldn&apos;t load lyrics. Try again later.</p>
+                    <p className="text-accent">Couldn&apos;t load lyrics. Try again later.</p>
                   )}
                 </>
               )}

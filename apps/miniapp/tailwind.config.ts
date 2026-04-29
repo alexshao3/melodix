@@ -7,7 +7,34 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
+      },
+      // See `apps/web/tailwind.config.ts` for the full token spec — the
+      // miniapp shares the exact same surface / ink / accent / hairline
+      // ladder so packages/ui components render identically across apps.
+      colors: {
+        surface: {
+          0: 'var(--surface-0)',
+          1: 'var(--surface-1)',
+          2: 'var(--surface-2)',
+          3: 'var(--surface-3)',
+        },
+        ink: {
+          1: 'var(--ink-1)',
+          2: 'var(--ink-2)',
+          3: 'var(--ink-3)',
+        },
+        accent: {
+          DEFAULT: 'var(--accent-bg)',
+          fg: 'var(--accent-fg)',
+          hover: 'var(--accent-bg-hover)',
+          soft: 'var(--accent-soft)',
+          line: 'var(--accent-line)',
+        },
+        hairline: {
+          DEFAULT: 'var(--hairline)',
+          strong: 'var(--hairline-strong)',
+        },
       },
       animation: {
         marquee: 'marquee 30s linear infinite',

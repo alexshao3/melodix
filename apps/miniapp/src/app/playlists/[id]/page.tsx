@@ -19,7 +19,7 @@ export default async function MiniPlaylist({ params }: PageProps) {
     <div className="flex flex-col gap-5">
       <header className="relative overflow-hidden rounded-2xl bg-white/[0.04] p-4">
         <div className="flex items-center gap-3">
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-fuchsia-600 to-cyan-500">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[color:var(--surface-2)]">
             {playlist.cover ? (
               <Image
                 src={playlist.cover}

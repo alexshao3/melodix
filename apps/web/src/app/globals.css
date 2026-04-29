@@ -3,33 +3,80 @@
 @tailwind utilities;
 
 /*
- * Theme tokens. The dark theme is the default and lives on `:root`; the light
- * theme is opted into by `next-themes` setting `<html class="light">`. Every
- * variable below has a light-theme override under the `.light` selector
- * further down.
+ * Theme tokens — Build direction (London-studio aesthetic, type-led, single
+ * coral accent). Surfaces and ink are oklch-derived for perceptual evenness;
+ * the accent is a chromatic coral that flips meaningfully on hover but is
+ * never gradient-blended with anything else. The dark theme is the default
+ * and lives on `:root`; the light theme is opted into by `next-themes`
+ * setting `<html class="light">`. Every variable below has a light-theme
+ * override under the `.light` selector further down.
  */
 :root {
   color-scheme: dark;
+
+  /* Legacy tokens kept so untyped utility classes (`bg-white/X`,
+   * `text-zinc-*`, …) still render correctly while we migrate. */
   --background: 6 6 8;
   --foreground: 250 250 250;
-  --surface-fg: 255 255 255; /* the colour used by `bg-white/X` overlays */
-  --surface-bg: 0 0 0; /* the colour used by `bg-black/X` overlays */
-  --selection: rgba(34, 211, 238, 0.45);
-  --selection-fg: #ffffff;
+  --surface-fg: 255 255 255;
+  --surface-bg: 0 0 0;
   --scrollbar-thumb: rgba(255, 255, 255, 0.08);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.18);
+
+  /* Semantic surfaces — paint these instead of `bg-zinc-9XX` /
+   * `bg-black/30`. Stepped so depth reads at a glance. */
+  --surface-0: oklch(0.16 0.005 286); /* page */
+  --surface-1: oklch(0.20 0.005 286); /* card */
+  --surface-2: oklch(0.24 0.005 286); /* hover / raised */
+  --surface-3: oklch(0.28 0.006 286); /* popover / active */
+  --hairline: oklch(0.97 0.005 286 / 0.06);
+  --hairline-strong: oklch(0.97 0.005 286 / 0.12);
+
+  /* Ink ladder — text colour, dark theme. */
+  --ink-1: oklch(0.97 0.005 286); /* primary */
+  --ink-2: oklch(0.72 0.008 286); /* secondary */
+  --ink-3: oklch(0.50 0.010 286); /* tertiary / disabled */
+
+  /* Accent — single chromatic colour, never gradient-blended. */
+  --accent-bg: oklch(0.66 0.26 27); /* coral / play */
+  --accent-bg-hover: oklch(0.71 0.26 27);
+  --accent-fg: oklch(0.16 0.005 286); /* deep ink for max contrast on coral */
+  --accent-soft: oklch(0.66 0.26 27 / 0.16);
+  --accent-line: oklch(0.66 0.26 27 / 0.40);
+
+  --selection: oklch(0.66 0.26 27 / 0.45);
+  --selection-fg: oklch(0.97 0.005 286);
 }
 
 :root.light {
   color-scheme: light;
-  --background: 248 250 252; /* slate-50 */
-  --foreground: 15 23 42; /* slate-900 */
-  --surface-fg: 15 23 42; /* dark ink for overlay tints */
-  --surface-bg: 255 255 255; /* light surfaces */
-  --selection: rgba(8, 145, 178, 0.35); /* brand-600 @ 35% */
-  --selection-fg: #0e7490;
+
+  --background: 248 250 252;
+  --foreground: 15 23 42;
+  --surface-fg: 15 23 42;
+  --surface-bg: 255 255 255;
   --scrollbar-thumb: rgba(15, 23, 42, 0.18);
   --scrollbar-thumb-hover: rgba(15, 23, 42, 0.32);
+
+  --surface-0: oklch(0.99 0.003 286);
+  --surface-1: oklch(0.97 0.005 286);
+  --surface-2: oklch(0.94 0.006 286);
+  --surface-3: oklch(0.91 0.008 286);
+  --hairline: oklch(0.20 0.010 286 / 0.10);
+  --hairline-strong: oklch(0.20 0.010 286 / 0.18);
+
+  --ink-1: oklch(0.20 0.010 286);
+  --ink-2: oklch(0.40 0.012 286);
+  --ink-3: oklch(0.55 0.014 286);
+
+  --accent-bg: oklch(0.62 0.24 27);
+  --accent-bg-hover: oklch(0.66 0.26 27);
+  --accent-fg: oklch(0.99 0.003 286);
+  --accent-soft: oklch(0.62 0.24 27 / 0.14);
+  --accent-line: oklch(0.62 0.24 27 / 0.40);
+
+  --selection: oklch(0.62 0.24 27 / 0.30);
+  --selection-fg: oklch(0.20 0.010 286);
 }
 
 * {
@@ -44,26 +91,26 @@ body {
 }
 
 body {
+  /* Quiet near-black wash; the only chroma in the page-background is a
+   * single soft coral pool in the upper-right that ties the bg to the
+   * brand accent without adding the cyan/fuchsia/rose triad we used to
+   * paint everywhere. */
   background-image: radial-gradient(
-      900px 600px at 80% -10%,
-      rgba(217, 70, 239, 0.18),
+      900px 600px at 88% -8%,
+      oklch(0.66 0.26 27 / 0.10),
       transparent 60%
     ),
-    radial-gradient(700px 500px at -10% 10%, rgba(34, 211, 238, 0.18), transparent 60%),
-    radial-gradient(600px 600px at 50% 110%, rgba(16, 185, 129, 0.12), transparent 70%),
-    linear-gradient(180deg, #050507 0%, #08080d 100%);
+    linear-gradient(180deg, oklch(0.14 0.005 286) 0%, oklch(0.18 0.006 286) 100%);
   background-attachment: fixed;
 }
 
 .light body {
   background-image: radial-gradient(
-      900px 600px at 80% -10%,
-      rgba(217, 70, 239, 0.12),
+      900px 600px at 88% -8%,
+      oklch(0.62 0.24 27 / 0.08),
       transparent 60%
     ),
-    radial-gradient(700px 500px at -10% 10%, rgba(34, 211, 238, 0.14), transparent 60%),
-    radial-gradient(600px 600px at 50% 110%, rgba(16, 185, 129, 0.08), transparent 70%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+    linear-gradient(180deg, oklch(0.99 0.003 286) 0%, oklch(0.96 0.005 286) 100%);
 }
 
 ::selection {
@@ -71,15 +118,15 @@ body {
   color: var(--selection-fg);
 }
 
-/* Aurora background mesh — promoted to its own composited layer so the
+/* Aurora background mesh — quieted to a single coral pool with a soft
+ * neutral counter-light. Promoted to its own composited layer so the
  * 40 px blur is paid once on first paint instead of on every scroll /
- * resize. `saturate()` was dropped: the radial-gradients already define
- * the colour, the saturation pass was paint-bound waste. `pointer-events`
- * is none-d here too in case it sits over interactive content. */
+ * resize. The previous fuchsia + cyan + emerald triad was the loudest
+ * "AI slop" tell in the design audit and got swapped for one branded
+ * accent + a low-chroma neutral. */
 .aurora {
-  background: radial-gradient(1200px 700px at 0% 0%, rgba(217, 70, 239, 0.35), transparent 60%),
-    radial-gradient(900px 600px at 100% 0%, rgba(34, 211, 238, 0.35), transparent 60%),
-    radial-gradient(900px 700px at 50% 120%, rgba(16, 185, 129, 0.35), transparent 60%);
+  background: radial-gradient(1200px 700px at 8% 0%, oklch(0.66 0.26 27 / 0.30), transparent 60%),
+    radial-gradient(900px 700px at 92% 100%, oklch(0.97 0.005 286 / 0.06), transparent 60%);
   background-size: 200% 200%;
   filter: blur(40px);
   pointer-events: none;
@@ -99,19 +146,11 @@ body {
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-/* Text gradients */
-.text-gradient {
-  background: linear-gradient(120deg, #67e8f9 0%, #d946ef 50%, #f43f5e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.text-gradient-cool {
-  background: linear-gradient(120deg, #a5f3fc 0%, #c4b5fd 60%, #fbcfe8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Brand accent — solid coral, used in display headlines as the single
+ * "Boom" colour. Replaced the old cyan→fuchsia→rose `.text-gradient`
+ * after the Build re-skin (PR #2 of the design audit). */
+.text-accent {
+  color: var(--accent-bg);
 }
 
 /* Custom scrollbar */
@@ -295,10 +334,10 @@ body {
   scrollbar-width: none;
 }
 
-/* Smooth focus */
+/* Smooth focus — coral accent ring instead of legacy cyan. */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid rgb(34 211 238);
+  outline: 2px solid var(--accent-bg);
   outline-offset: 2px;
   border-radius: 6px;
 }

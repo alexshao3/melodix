@@ -1,35 +1,41 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  content: [
-    './src/**/*.{ts,tsx}',
-    '../../packages/ui/src/**/*.{ts,tsx}',
-  ],
+  content: ['./src/**/*.{ts,tsx}', '../../packages/ui/src/**/*.{ts,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
-        brand: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
+        // Semantic colour tokens. Source of truth lives in
+        // `apps/web/src/app/globals.css` (`:root` + `:root.light`); these
+        // class shortcuts just expose the CSS variables to Tailwind so
+        // utilities like `bg-surface-1`, `text-ink-2`, `text-accent`,
+        // `border-hairline` Just Work in JSX.
+        surface: {
+          0: 'var(--surface-0)',
+          1: 'var(--surface-1)',
+          2: 'var(--surface-2)',
+          3: 'var(--surface-3)',
+        },
+        ink: {
+          1: 'var(--ink-1)',
+          2: 'var(--ink-2)',
+          3: 'var(--ink-3)',
         },
         accent: {
-          rose: '#f43f5e',
-          fuchsia: '#d946ef',
-          violet: '#8b5cf6',
-          emerald: '#10b981',
+          DEFAULT: 'var(--accent-bg)',
+          fg: 'var(--accent-fg)',
+          hover: 'var(--accent-bg-hover)',
+          soft: 'var(--accent-soft)',
+          line: 'var(--accent-line)',
+        },
+        hairline: {
+          DEFAULT: 'var(--hairline)',
+          strong: 'var(--hairline-strong)',
         },
       },
       animation: {

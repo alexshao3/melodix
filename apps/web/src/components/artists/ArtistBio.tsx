@@ -27,7 +27,7 @@ export function ArtistBio({ bio }: { bio: string }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 text-xs font-medium text-cyan-300 hover:text-cyan-200"
+          className="mt-1 text-xs font-medium text-accent hover:opacity-80"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>
